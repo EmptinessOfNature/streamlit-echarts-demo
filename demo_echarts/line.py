@@ -192,7 +192,7 @@ def gupiao_line_race():
             "encode": {
                 "x": "dt",
                 "y": "close",
-                "label": ["country", "close"],
+                "label": ["Code", "close"],
                 "itemName": "dt",
                 "tooltip": ["close"],
             },
@@ -207,7 +207,7 @@ def gupiao_line_race():
         "tooltip": {"order": "valueDesc", "trigger": "axis"},
         "xAxis": {"type": "category", "nameLocation": "middle"},
         "yAxis": {"name": "Close"},
-        "grid": {"right": 140},
+        "grid": {"right": 140, "height":500},
         "series": seriesList,
     }
     st_echarts(options=option, height="600px")
