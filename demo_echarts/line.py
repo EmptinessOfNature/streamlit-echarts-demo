@@ -190,11 +190,11 @@ def gupiao_line_race():
             "labelLayout": {"moveOverlap": "shiftY"},
             "emphasis": {"focus": "series"},
             "encode": {
-                "x": "时间",
-                "y": "收盘",
-                "label": ["股票代码", "收盘"],
-                "itemName": "时间",
-                "tooltip": ["收盘"],
+                "x": "dt",
+                "y": "close",
+                "label": ["Code", "close"],
+                "itemName": "dt",
+                "tooltip": ["close"],
             },
         }
         for country in countries
