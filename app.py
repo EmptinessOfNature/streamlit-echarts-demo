@@ -8,7 +8,7 @@ from demo_pyecharts import ST_PY_DEMOS
 
 
 def main():
-    st.title("Streamlit ECharts Demo")
+    st.title("股票交易回测")
 
     with st.sidebar:
         st.header("Configuration")
