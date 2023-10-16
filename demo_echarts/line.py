@@ -192,7 +192,7 @@ def gupiao_line_race():
             "encode": {
                 "x": "dt",
                 "y": "close",
-                "label": ["Code", "close"],
+                "label": ["country", "close"],
                 "itemName": "dt",
                 "tooltip": ["close"],
             },
@@ -203,10 +203,10 @@ def gupiao_line_race():
     option = {
         "animationDuration": 10000,
         "dataset": [{"id": "dataset_raw", "source": raw_data}] + datasetWithFilters,
-        "title": {"text": "Income in Europe since 1950"},
+        "title": {"text": "105.QQQ分时图回测"},
         "tooltip": {"order": "valueDesc", "trigger": "axis"},
         "xAxis": {"type": "category", "nameLocation": "middle"},
-        "yAxis": {"name": "Income"},
+        "yAxis": {"name": "Close"},
         "grid": {"right": 140},
         "series": seriesList,
     }
