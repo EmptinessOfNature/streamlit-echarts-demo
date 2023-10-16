@@ -281,6 +281,10 @@ def render_line_race():
 
 
 ST_LINE_DEMOS = {
+    "股票: Line Race": (
+        gupiao_line_race,
+        "https://echarts.apache.org/examples/en/editor.html?c=line-race",
+    ),
     "Line: Basic Line Chart": (
         render_basic_line_chart,
         "https://echarts.apache.org/examples/en/editor.html?c=line-simple",
@@ -301,8 +305,5 @@ ST_LINE_DEMOS = {
         render_line_race,
         "https://echarts.apache.org/examples/en/editor.html?c=line-race",
     ),
-        "股票: Line Race": (
-        gupiao_line_race,
-        "https://echarts.apache.org/examples/en/editor.html?c=line-race",
-    ),
+
 }
