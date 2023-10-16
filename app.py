@@ -8,7 +8,7 @@ from demo_pyecharts import ST_PY_DEMOS
 
 
 def main():
-    st.title("股票交易回测")
+    st.title("股票交易回测123")
 
     with st.sidebar:
         st.header("Configuration")
