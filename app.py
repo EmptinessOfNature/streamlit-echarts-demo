@@ -38,7 +38,7 @@ def main():
             if len(stockCode)<1:
                 st.write('Sorry, unaviable data, Please try again!')
             else:
-                st.write('Loding stock ' +str(stockCode) + 'data...')
+                st.write('Loding stock ' +str(stockCode) + ' data...')
 
         if selected_api == "echarts":
             st.caption(
