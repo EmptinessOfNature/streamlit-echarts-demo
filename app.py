@@ -35,7 +35,7 @@ def main():
         stockCode = st.text_input('Stock Code:')
         conn = {'SC': stockCode}
         if st.button('Connect'):
-            if stockCode is null or len(stockCode)<1:
+            if len(stockCode)<1:
                 st.write('Sorry, unaviable data, Please try again!')
             else:
                 st.write('Loding stock ' +str(stockCode) + 'data...')
