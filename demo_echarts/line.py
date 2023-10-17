@@ -206,7 +206,18 @@ def gupiao_line_race():
         "title": {"text": "105.QQQ分时图回测"},
         "tooltip": {"order": "valueDesc", "trigger": "axis"},
         "xAxis": {"type": "category", "nameLocation": "middle"},
-        "yAxis": {"name": "Close", "min":300},
+        "yAxis": {"name": "Close", 
+          min:0,  //取0为最小刻度
+          max: 100, //取100为最大刻度
+          min:'dataMin', //取最小值为最小刻度
+          max: 'dataMax', //取最大值为最大刻度
+          min: function(value) {//取最小值向下取整为最小刻度
+            return Math.floor(value.min)
+          },
+          max: function(value) {//取最大值向上取整为最大刻度
+            return  Math.ceil(value.max) 
+          },
+        },
         "grid": {"right": 140},
         "series": seriesList,
     }
