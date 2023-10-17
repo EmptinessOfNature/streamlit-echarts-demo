@@ -2,6 +2,7 @@ import inspect
 import textwrap
 
 import streamlit as st
+from snowflake.snowpark.session import Session
 
 from demo_echarts import ST_DEMOS
 from demo_pyecharts import ST_PY_DEMOS
@@ -32,11 +33,12 @@ def main():
             if selected_api == "echarts"
             else ST_PY_DEMOS[selected_page]
         )
-        SF_ACCOUNT = st.text_input('gupiao:')
+        SF_ACCOUNT = st.text_input('Stock Code:')
         conn = {'ACCOUNT': SF_ACCOUNT}
         if st.button('Connect') or s.pressed_first_button:
             session = Session.builder.configs(conn).create()
             s.pressed_first_button = True
+            st.write('Loding data...')
 
         if selected_api == "echarts":
             st.caption(
