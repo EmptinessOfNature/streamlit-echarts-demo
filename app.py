@@ -32,10 +32,13 @@ def main():
             if selected_api == "echarts"
             else ST_PY_DEMOS[selected_page]
         )
-        SF_ACCOUNT = st.text_input('Stock Code:')
-        conn = {'ACCOUNT': SF_ACCOUNT}
+        stockCode = st.text_input('Stock Code:')
+        conn = {'SC': stockCode}
         if st.button('Connect'):
-            st.write('Loding data...')
+            if stockCode is null or len(stockCode)<1:
+                st.write('Sorry, unaviable data, Please try again!')
+            else:
+                st.write('Loding stock ' +str(stockCode) + 'data...')
 
         if selected_api == "echarts":
             st.caption(
