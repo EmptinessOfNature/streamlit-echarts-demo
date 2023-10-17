@@ -46,7 +46,7 @@ def main():
                     data_list = stock_data.values.tolist()
                     stock_data['Code'] ='stockCode'
                     data_list.insert(0, ["dt","open","close","high","low","vol","cje","zxj","Code"])
-                    f = open('./data/105.QQQ.json', 'w')
+                    f = open('./data/stock_input_code_fenshi.json', 'w')
                     f.write(str(data_list).replace("'","\""))
                     f.close()
                     st.write('数据加载完成!')
