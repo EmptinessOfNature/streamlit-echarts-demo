@@ -5,7 +5,7 @@ import streamlit as st
 
 from demo_echarts import ST_DEMOS
 from demo_pyecharts import ST_PY_DEMOS
-
+import akshare as ak
 
 def main():
     st.title("股票交易回测123")
@@ -39,6 +39,8 @@ def main():
                 st.write('Sorry, unaviable data, Please try again!')
             else:
                 st.write('Loding stock ' +str(stockCode) + ' data...')
+                stock_data = ak.stock_us_hist_min_em(symbol=str(stockCode))
+                
 
         if selected_api == "echarts":
             st.caption(
