@@ -34,7 +34,7 @@ def main():
         )
         SF_ACCOUNT = st.text_input('Stock Code:')
         conn = {'ACCOUNT': SF_ACCOUNT}
-        if st.button('Connect') or s.pressed_first_button:
+        if st.button('Connect'):
             st.write('Loding data...')
 
         if selected_api == "echarts":
