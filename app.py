@@ -45,6 +45,12 @@ def main():
             by copying the pyecharts object into st_pyecharts. 
             Pyecharts is still using ECharts 4 underneath, which is why the theming between st_echarts and st_pyecharts is different."""
             )
+            
+         SF_ACCOUNT = st.text_input('gupiao id:')
+         conn = {'ACCOUNT': SF_ACCOUNT}
+         if st.button('Connect') or s.pressed_first_button:
+            session = Session.builder.configs(conn).create()
+            s.pressed_first_button = True
 
     demo()
 
