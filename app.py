@@ -36,10 +36,14 @@ def main():
         conn = {'SC': stockCode}
         if st.button('Connect'):
             if len(stockCode)<1:
-                st.write('Sorry, unaviable data, Please try again!')
+                st.write('Sorry, invalid code, Please try again!')
             else:
                 st.write('Loding stock ' +str(stockCode) + ' data...')
-                stock_data = ak.stock_us_hist_min_em(symbol=str(stockCode))
+                try:
+                    stock_data = ak.stock_us_hist_min_em(symbol=str(stockCode))
+                    
+                except:
+                    st.write('Sorry, invalid code, Please check check!')
                 
 
         if selected_api == "echarts":
