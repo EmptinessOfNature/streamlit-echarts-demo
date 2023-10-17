@@ -206,9 +206,7 @@ def gupiao_line_race():
         "title": {"text": "105.QQQ分时图回测"},
         "tooltip": {"order": "valueDesc", "trigger": "axis"},
         "xAxis": {"type": "category", "nameLocation": "middle"},
-        "yAxis": {"name": "Close", 
-           scale: true
-        },
+        "yAxis": {"name": "Close", "scale": true},
         "grid": {"right": 140},
         "series": seriesList,
     }
