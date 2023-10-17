@@ -32,18 +32,26 @@ def main():
             if selected_api == "echarts"
             else ST_PY_DEMOS[selected_page]
         )
+        # 输入股票代码框
         stockCode = st.text_input('Stock Code:')
         conn = {'SC': stockCode}
-        if st.button('Connect'):
+        # 按钮
+        if st.button('开始'):
             if len(stockCode)<1:
-                st.write('Sorry, invalid code, Please try again!')
+                st.write('股票代码错误，请重试')
             else:
-                st.write('Loding stock ' +str(stockCode) + ' data...')
+                st.write('加载股票中 ' +str(stockCode) + ' ...')
                 try:
                     stock_data = ak.stock_us_hist_min_em(symbol=str(stockCode))
-                    
+                    data_list = stock_data.values.tolist()
+                    stock_data['Code'] ='stockCode'
+                    data_list.insert(0, ["dt","open","close","high","low","vol","cje","zxj","Code"])
+                    f = open('./data/105qqq.json', 'w')
+                    f.write(str(data_list).replace("'","\""))
+                    f.close
+                    st.write('数据加载完成!')
                 except:
-                    st.write('Sorry, invalid code, Please check check!')
+                    st.write('股票代码错误，请重试')
                 
 
         if selected_api == "echarts":
