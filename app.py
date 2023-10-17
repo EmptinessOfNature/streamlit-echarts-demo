@@ -48,7 +48,7 @@ def main():
                     data_list.insert(0, ["dt","open","close","high","low","vol","cje","zxj","Code"])
                     f = open('./data/105qqq.json', 'w')
                     f.write(str(data_list).replace("'","\""))
-                    f.close
+                    f.close()
                     st.write('数据加载完成!')
                 except:
                     st.write('股票代码错误，请重试')
