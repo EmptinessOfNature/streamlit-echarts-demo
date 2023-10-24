@@ -152,10 +152,12 @@ def render_stacked_area_chart():
 
 def gupiao_line_race():
     # 股票linerace的代码
-    with open("./data/105.QQQ.json") as f:
+    # with open("./data/105.QQQ.json") as f:
+    with open("./data/stock_input_code_fenshi.json") as f:
         raw_data = json.load(f)
     countries = [
-        "105.QQQ",
+        # "105.QQQ",
+        "分时图",
     ]
 
     datasetWithFilters = [
@@ -203,7 +205,7 @@ def gupiao_line_race():
     option = {
         "animationDuration": 10000,
         "dataset": [{"id": "dataset_raw", "source": raw_data}] + datasetWithFilters,
-        "title": {"text": "105.QQQ分时图回测"},
+        "title": {"text": "分时图回测"},
         "tooltip": {"order": "valueDesc", "trigger": "axis"},
         "xAxis": {"type": "category", "nameLocation": "middle"},
         "yAxis": {"name": "Close", "scale": "true"},
