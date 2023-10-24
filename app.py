@@ -43,13 +43,14 @@ def main():
                 st.write('加载股票中 ' +str(stockCode) + ' ...')
                 try:
                     stock_data = ak.stock_us_hist_min_em(symbol=str(stockCode))
+                    stock_data['Code'] = '分时图'
                     data_list = stock_data.values.tolist()
-                    stock_data['Code'] ='stockCode'
                     data_list.insert(0, ["dt","open","close","high","low","vol","cje","zxj","Code"])
                     f = open('./data/stock_input_code_fenshi.json', 'w')
                     f.write(str(data_list).replace("'","\""))
                     f.close()
                     st.write('数据加载完成!')
+                    st.title("股票交易回测"+stockCode)
                 except:
                     st.write('股票代码错误，请重试')
                 
