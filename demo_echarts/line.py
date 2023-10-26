@@ -13,7 +13,8 @@ def render_basic_line_chart():
         "series": [{"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}],
     }
     st_echarts(
-        options=option, height="400px",
+        options=option,
+        height="400px",
     )
 
 
@@ -153,8 +154,12 @@ def render_stacked_area_chart():
 def gupiao_line_race():
     # 股票linerace的代码
     # with open("./data/105.QQQ.json") as f:
-    with open("./data/stock_input_code_fenshi.json") as f:
-        raw_data = json.load(f)
+    try:
+        with open("./data/stock_input_code_fenshi.json") as f:
+            raw_data = json.load(f)
+    except:
+        with open("./data/105.QQQ.json") as f:
+            raw_data = json.load(f)
     countries = [
         # "105.QQQ",
         "分时图",
@@ -214,7 +219,8 @@ def gupiao_line_race():
     }
     st_echarts(options=option, height="600px")
 
-def render_line_race(): 
+
+def render_line_race():
     with open("./data/105qqq.json") as f:
         raw_data = json.load(f)
     countries = [
@@ -307,5 +313,4 @@ ST_LINE_DEMOS = {
         render_line_race,
         "https://echarts.apache.org/examples/en/editor.html?c=line-race",
     ),
-
 }

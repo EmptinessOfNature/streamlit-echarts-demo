@@ -7,6 +7,7 @@ from demo_echarts import ST_DEMOS
 from demo_pyecharts import ST_PY_DEMOS
 import akshare as ak
 
+
 def main():
     st.title("股票交易回测123")
 
@@ -33,27 +34,39 @@ def main():
             else ST_PY_DEMOS[selected_page]
         )
         # 输入股票代码框
-        stockCode = st.text_input('Stock Code:')
-        conn = {'SC': stockCode}
+        stockCode = st.text_input("Stock Code:")
+        conn = {"SC": stockCode}
         # 按钮
-        if st.button('开始'):
-            if len(stockCode)<1:
-                st.write('股票代码错误，请重试')
+        if st.button("开始"):
+            if len(stockCode) < 1:
+                st.write("股票代码错误，请重试")
             else:
-                st.write('加载股票中 ' +str(stockCode) + ' ...')
+                st.write("加载股票中 " + str(stockCode) + " ...")
                 try:
                     stock_data = ak.stock_us_hist_min_em(symbol=str(stockCode))
-                    stock_data['Code'] = '分时图'
+                    stock_data["Code"] = "分时图"
                     data_list = stock_data.values.tolist()
-                    data_list.insert(0, ["dt","open","close","high","low","vol","cje","zxj","Code"])
-                    f = open('./data/stock_input_code_fenshi.json', 'w')
-                    f.write(str(data_list).replace("'","\""))
+                    data_list.insert(
+                        0,
+                        [
+                            "dt",
+                            "open",
+                            "close",
+                            "high",
+                            "low",
+                            "vol",
+                            "cje",
+                            "zxj",
+                            "Code",
+                        ],
+                    )
+                    f = open("./data/stock_input_code_fenshi.json", "w")
+                    f.write(str(data_list).replace("'", '"'))
                     f.close()
-                    st.write('数据加载完成!')
-                    st.title("股票交易回测"+stockCode)
+                    st.write("数据加载完成!")
+                    st.title("股票交易回测" + stockCode)
                 except:
-                    st.write('股票代码错误，请重试')
-                
+                    st.write("股票代码错误，请重试")
 
         if selected_api == "echarts":
             st.caption(
