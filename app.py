@@ -1,15 +1,21 @@
 import inspect
+import os.path
 import textwrap
+import time
 
 import streamlit as st
 
 from demo_echarts import ST_DEMOS
 from demo_pyecharts import ST_PY_DEMOS
 import akshare as ak
+from ibapi.client import Contract
+from datetime import datetime
+from ibapi.fufei6_exe import SimpleClient
 
 
 def main():
     st.title("股票交易回测123")
+    client = ''
 
     with st.sidebar:
         st.header("Configuration")
@@ -67,6 +73,38 @@ def main():
                     st.title("股票交易回测" + stockCode)
                 except:
                     st.write("股票代码错误，请重试")
+         # 按钮
+        if st.button("盈透"):
+
+            print('按下button盈透'+str(datetime.now()))
+            if len(stockCode) < 1:
+                st.write("股票代码错误，请重试")
+            st.write('使用盈透数据，数据加载中'+stockCode)
+            if client == '':
+                client = SimpleClient('127.0.0.1', 7497, 3)
+                print('新建client')
+            client.reqCurrentTime()
+            if os.path.isfile('data/historicalData.json'):
+                os.remove('data/historicalData.json')
+
+            contract = Contract()
+            # contract.symbol = "TSLA"
+            contract.symbol = stockCode
+            contract.secType = "STK"
+            contract.currency = "USD"
+            # In the API side, NASDAQ is always defined as ISLAND in the exchange field
+            contract.exchange = "ISLAND"
+            now = datetime.now().strftime("%Y%m%d %H:%M:%S")
+            req_id = int(datetime.now().strftime("%Y%m%d"))
+            client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'MIDPOINT', False, 1, False, [])
+            time.sleep(5)
+            print('断开client')
+            client.disconnect()
+            ret='[["dt", "open", "close", "high", "low", "vol", "cje", "zxj", "Code"],'+open('data/historicalData.json').readline()[:-1]+']'
+            with open('data/historicalData_j.json','w') as f:
+                f.write(ret)
+
+            st.write(stockCode + " 数据加载完成!")
 
         if selected_api == "echarts":
             st.caption(

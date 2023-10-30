@@ -155,7 +155,7 @@ def gupiao_line_race():
     # 股票linerace的代码
     # with open("./data/105.QQQ.json") as f:
     try:
-        with open("./data/stock_input_code_fenshi.json") as f:
+        with open("./data/historicalData_j.json") as f:
             raw_data = json.load(f)
     except:
         with open("./data/105.QQQ.json") as f:
