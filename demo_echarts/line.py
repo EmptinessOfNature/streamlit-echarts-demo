@@ -162,8 +162,10 @@ def gupiao_line_race():
             raw_data = json.load(f)
     countries = [
         # "105.QQQ",
-        "分时图",
+        "分时图"
+        ,"标记点1"
     ]
+    countries_2 = ["标记点1"]
 
     datasetWithFilters = [
         {
@@ -184,7 +186,8 @@ def gupiao_line_race():
 
     seriesList = [
         {
-            "type": "line",
+            # "type": "line",
+            "type": "scatter",
             "datasetId": f"dataset_{country}",
             "showSymbol": False,
             "name": country,
@@ -206,6 +209,34 @@ def gupiao_line_race():
         }
         for country in countries
     ]
+    seriesList_2 = [
+        {
+            "type": "scatter",
+            "datasetId": f"dataset_{country}",
+            "showSymbol": False,
+            "name": country,
+            "endLabel": {
+                "show": True,
+                "formatter": JsCode(
+                    "function (params) { return params.value[-1] + ': ' + params.value[2];}"
+                ).js_code,
+            },
+            "labelLayout": {"moveOverlap": "shiftY"},
+            "emphasis": {"focus": "series"},
+            "encode": {
+                "x": "dt",
+                "y": "close",
+                "label": ["Code", "close"],
+                "itemName": "dt",
+                "tooltip": ["close"],
+            },
+        }
+        for country in countries_2
+    ]
+
+    # seriesList = seriesList + seriesList_2
+    # print(seriesList_2)
+    print(seriesList)
 
     option = {
         "animationDuration": 10000,

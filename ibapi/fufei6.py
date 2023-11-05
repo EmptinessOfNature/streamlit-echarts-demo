@@ -9,7 +9,7 @@ from ibapi.utils import iswrapper
 
 
 class SimpleClient(EWrapper, EClient):
-    ''' Serves as the client and the wrapper '''
+    """Serves as the client and the wrapper"""
 
     def __init__(self, addr, port, client_id):
         EWrapper.__init__(self)
@@ -27,84 +27,168 @@ class SimpleClient(EWrapper, EClient):
     @iswrapper
     def currentTime(self, cur_time):
         t = datetime.fromtimestamp(cur_time)
-        with open('./currentTime','a') as f:
+        with open("./currentTime", "a") as f:
             f.write(str(t))
-        print('Current timelpy: {}'.format(t))
+        print("Current timelpy: {}".format(t))
 
     @iswrapper
     def contractDetails(self, reqId, details):
-        print('Long name: {}'.format(details.longName))
-        print('Category: {}'.format(details.category))
-        print('Subcategory: {}'.format(details.subcategory))
-        print('Contract ID: {}\n'.format(details.contract.conId))
+        print("Long name: {}".format(details.longName))
+        print("Category: {}".format(details.category))
+        print("Subcategory: {}".format(details.subcategory))
+        print("Contract ID: {}\n".format(details.contract.conId))
 
     @iswrapper
     def contractDetailsEnd(self, reqId):
-        print('The End')
+        print("The End")
 
     @iswrapper
     def nextValidId(self, order_id):
-        ''' Provides the next order ID '''
+        """Provides the next order ID"""
         self.order_id = order_id
-        print('Order ID: {}'.format(order_id))
+        print("Order ID: {}".format(order_id))
 
     @iswrapper
     def openOrder(self, order_id, contract, order, state):
-        ''' Called in response to the submitted order '''
-        print('Order status: '.format(state.status))
-        print('Commission charged: '.format(state.commission))
+        """Called in response to the submitted order"""
+        print("Order status: ".format(state.status))
+        print("Commission charged: ".format(state.commission))
 
     @iswrapper
-    def orderStatus(self, order_id, status, filled, remaining, avgFillPrice, \
-                    permId, parentId, lastFillPrice, clientId, whyHeld, mktCapPrice):
-        ''' Check the status of the subnitted order '''
-        print('Number of filled positions: {}'.format(filled))
-        print('Average fill price: {}'.format(avgFillPrice))
+    def orderStatus(
+        self,
+        order_id,
+        status,
+        filled,
+        remaining,
+        avgFillPrice,
+        permId,
+        parentId,
+        lastFillPrice,
+        clientId,
+        whyHeld,
+        mktCapPrice,
+    ):
+        """Check the status of the subnitted order"""
+        print("Number of filled positions: {}".format(filled))
+        print("Average fill price: {}".format(avgFillPrice))
 
     @iswrapper
     def position(self, account, contract, pos, avgCost):
-        ''' Read information about the account's open positions '''
-        print('Position in {}: {}'.format(contract.symbol, pos))
+        """Read information about the account's open positions"""
+        print("Position in {}: {}".format(contract.symbol, pos))
 
     @iswrapper
     def accountSummary(self, req_id, account, tag, value, currency):
-        ''' Read information about the account '''
-        print('Account {}: {} = {}'.format(account, tag, value))
+        """Read information about the account"""
+        print("Account {}: {} = {}".format(account, tag, value))
 
     @iswrapper
     def tickByTickMidPoint(self, reqId: int, time: int, midPoint: float):
         super().tickByTickMidPoint(reqId, time, midPoint)
-        print("Midpoint. ReqId:", reqId, "Time:", datetime.fromtimestamp(time), "MidPoint:", midPoint)
+        print(
+            "Midpoint. ReqId:",
+            reqId,
+            "Time:",
+            datetime.fromtimestamp(time),
+            "MidPoint:",
+            midPoint,
+        )
 
     @iswrapper
-    def tickByTickBidAsk(self, reqId: int, time: int, bidPrice: float, askPrice: float, bidSize, askSize,
-                         tickAttribBidAsk):
-        super().tickByTickBidAsk(reqId, time, bidPrice, askPrice, bidSize, askSize, tickAttribBidAsk)
-        print("BidAsk. ReqId:", reqId, "Time:", datetime.fromtimestamp(time),
-              "BidPrice:", bidPrice, "AskPrice:", askPrice, "BidSize:", bidSize, "AskSize:", askSize, "BidPastLow:",
-              tickAttribBidAsk.bidPastLow, "AskPastHigh:", tickAttribBidAsk.askPastHigh)
+    def tickByTickBidAsk(
+        self,
+        reqId: int,
+        time: int,
+        bidPrice: float,
+        askPrice: float,
+        bidSize,
+        askSize,
+        tickAttribBidAsk,
+    ):
+        super().tickByTickBidAsk(
+            reqId, time, bidPrice, askPrice, bidSize, askSize, tickAttribBidAsk
+        )
+        print(
+            "BidAsk. ReqId:",
+            reqId,
+            "Time:",
+            datetime.fromtimestamp(time),
+            "BidPrice:",
+            bidPrice,
+            "AskPrice:",
+            askPrice,
+            "BidSize:",
+            bidSize,
+            "AskSize:",
+            askSize,
+            "BidPastLow:",
+            tickAttribBidAsk.bidPastLow,
+            "AskPastHigh:",
+            tickAttribBidAsk.askPastHigh,
+        )
 
     @iswrapper
-    def tickByTickAllLast(self, reqId: int, tickType: int, time: int, price: float,
-                          size, tickAtrribLast, exchange: str, specialConditions: str):
-        super().tickByTickAllLast(reqId, tickType, time, price, size, tickAtrribLast,
-                                  exchange, specialConditions)
+    def tickByTickAllLast(
+        self,
+        reqId: int,
+        tickType: int,
+        time: int,
+        price: float,
+        size,
+        tickAtrribLast,
+        exchange: str,
+        specialConditions: str,
+    ):
+        super().tickByTickAllLast(
+            reqId,
+            tickType,
+            time,
+            price,
+            size,
+            tickAtrribLast,
+            exchange,
+            specialConditions,
+        )
         if tickType == 1:
-            print("Last.", end='')
+            print("Last.", end="")
         else:
-            print("AllLast.", end='')
-            print(" ReqId:", reqId,
-                  "Time:", datetime.fromtimestamp(time),
-                  "Price:", price, "Size:", size, "Exch:", exchange,
-                  "Spec Cond:", specialConditions, "PastLimit:", tickAtrribLast.pastLimit,
-                  "Unreported:", tickAtrribLast.unreported)
+            print("AllLast.", end="")
+            print(
+                " ReqId:",
+                reqId,
+                "Time:",
+                datetime.fromtimestamp(time),
+                "Price:",
+                price,
+                "Size:",
+                size,
+                "Exch:",
+                exchange,
+                "Spec Cond:",
+                specialConditions,
+                "PastLimit:",
+                tickAtrribLast.pastLimit,
+                "Unreported:",
+                tickAtrribLast.unreported,
+            )
 
     @iswrapper
     def tickPrice(self, reqId, tickType, price: float, attrib):
         super().tickPrice(reqId, tickType, price, attrib)
-        print("TickPrice. TickerId:", reqId, "tickType:", tickType,
-              "Price:", price, "CanAutoExecute:", attrib.canAutoExecute,
-              "PastLimit:", attrib.pastLimit, end=' ')
+        print(
+            "TickPrice. TickerId:",
+            reqId,
+            "tickType:",
+            tickType,
+            "Price:",
+            price,
+            "CanAutoExecute:",
+            attrib.canAutoExecute,
+            "PastLimit:",
+            attrib.pastLimit,
+            end=" ",
+        )
 
     @iswrapper
     def tickSize(self, reqId, tickType, size):
@@ -118,10 +202,21 @@ class SimpleClient(EWrapper, EClient):
 
     @iswrapper
     def realtimeBar(self, reqId, time, open, high, low, close, volume, WAP, count):
-        ''' Called in response to reqRealTimeBars '''
+        """Called in response to reqRealTimeBars"""
 
-        print('realtimeBar:{},time:{} - Opening : {},high :{},low :{},close :{},volume :{},WAP :{},count :{}'.format(
-            reqId, datetime.fromtimestamp(time), open, high, low, close, volume, WAP, count))
+        print(
+            "realtimeBar:{},time:{} - Opening : {},high :{},low :{},close :{},volume :{},WAP :{},count :{}".format(
+                reqId,
+                datetime.fromtimestamp(time),
+                open,
+                high,
+                low,
+                close,
+                volume,
+                WAP,
+                count,
+            )
+        )
 
     @iswrapper
     def historicalData(self, reqId: int, bar):
@@ -138,7 +233,12 @@ class SimpleClient(EWrapper, EClient):
 
     @iswrapper
     def histogramData(self, reqId: int, items):
-        print("HistogramData. ReqId:", reqId, "HistogramDataList:", "[%s]" % "; ".join(map(str, items)))
+        print(
+            "HistogramData. ReqId:",
+            reqId,
+            "HistogramDataList:",
+            "[%s]" % "; ".join(map(str, items)),
+        )
 
     @iswrapper
     def historicalTicks(self, reqId: int, ticks, done: bool):
@@ -157,18 +257,18 @@ class SimpleClient(EWrapper, EClient):
 
     @iswrapper
     def fundamentalData(self, reqId, data):
-        ''' Called in response to reqFundamentalData '''
+        """Called in response to reqFundamentalData"""
 
-        print('Fundamental data: ' + data)
+        print("Fundamental data: " + data)
 
     @iswrapper
     def error(self, req_id, code, msg, advancedOrderRejectJson):
-        print('Error {}: {}'.format(code, msg))
+        print("Error {}: {}".format(code, msg))
 
 
 def main():
     # Create the client and connect to TWS
-    client = SimpleClient('127.0.0.1', 7497, 0)
+    client = SimpleClient("127.0.0.1", 7497, 0)
     client.reqCurrentTime()
     # Sleep while the request is processed
     time.sleep(0.5)
@@ -186,16 +286,16 @@ def main():
     # Define the limit order
     order = Order()
     # order.action = 'SELL'
-    order.action = 'BUY'
+    order.action = "BUY"
     order.totalQuantity = 230813
-    order.orderType = 'MKT'
+    order.orderType = "MKT"
     # Obtain a valid ID for the order
     # client = SimpleClient('127.0.0.1', 7497, 0)
     client.reqIds(1)
     time.sleep(0.5)
-    order_id = max(client.order_id,1)
+    order_id = max(client.order_id, 1)
     # Place the order
-    print("order_id",order_id)
+    print("order_id", order_id)
     if order_id:
         # client = SimpleClient('127.0.0.1', 7497, 0)
         # print("self.conn",client.conn)
@@ -205,7 +305,7 @@ def main():
         time.sleep(1)
         print("下单成功")
     else:
-        print('Order ID not received. Ending application.')
+        print("Order ID not received. Ending application.")
         # sys.exit()
 
     # Obtain information about open positions
@@ -217,7 +317,7 @@ def main():
     # Obtain information about account
     # client = SimpleClient('127.0.0.1', 7497, 0)
     # 读取用户当前账户类型和可用余额
-    client.reqAccountSummary(0, 'All', 'AccountType,AvailableFunds')
+    client.reqAccountSummary(0, "All", "AccountType,AvailableFunds")
     time.sleep(2)
 
     # Request the current time
@@ -225,8 +325,8 @@ def main():
     # Request ten ticks containing midpoint data
 
     print("获取bidask的数据")
-    client.reqTickByTickData(1, contract, 'BidAsk', 1, True)
-    client.reqTickByTickData(3, contract, 'MidPoint', 1, False)
+    client.reqTickByTickData(1, contract, "BidAsk", 1, True)
+    client.reqTickByTickData(3, contract, "MidPoint", 1, False)
     # time.sleep(5)
     # print("获取last的数据")
     # client.reqTickByTickData(2, contract, 'Last', 1, False)
@@ -255,17 +355,18 @@ def main():
     # client.reqHistoricalTicks(8,contract,"20211230 21:39:33", "", 10, "TRADES", 1, True, [])
     # Request fundamental data
     con = Contract()
-    con.symbol = 'IBM'
-    con.secType = 'STK'
-    con.exchange = 'SMART'
-    con.currency = 'USD'
-    client.reqFundamentalData(9, con, 'ReportSnapshot', [])
+    con.symbol = "IBM"
+    con.secType = "STK"
+    con.exchange = "SMART"
+    con.currency = "USD"
+    client.reqFundamentalData(9, con, "ReportSnapshot", [])
 
     # Sleep while the requests are processed
     time.sleep(5)
 
     # Sleep while the request is processed
     client.disconnect()
+
 
 def read_data_fq():
     # con = Contract()
@@ -287,32 +388,34 @@ def read_data_fq():
     # contract.secType = "CASH"
     # contract.currency = "USD"
     # contract.exchange = "IDEALPRO"
-    client = SimpleClient('127.0.0.1', 7497, 0)
+    client = SimpleClient("127.0.0.1", 7497, 0)
     # client.reqHistogramData(7, contract, 1, "3 days")
-    print('开始接收数据')
+    print("开始接收数据")
 
-    client.reqRealTimeBars(5, contract, 10, 'MIDPOINT', True, [])
+    client.reqRealTimeBars(5, contract, 10, "MIDPOINT", True, [])
 
     # Request ten ticks containing midpoint data
-    client.reqTickByTickData(0, contract, 'MidPoint', 10, True)
-    client.reqTickByTickData(1, contract, 'BidAsk', 10, True)
+    client.reqTickByTickData(0, contract, "MidPoint", 10, True)
+    client.reqTickByTickData(1, contract, "BidAsk", 10, True)
 
     # Request market data
-    client.reqMktData(1, contract, '', False, False, [])
+    client.reqMktData(1, contract, "", False, False, [])
 
     # Request current bars
-    client.reqRealTimeBars(2, contract, 5, 'MIDPOINT', True, [])
+    client.reqRealTimeBars(2, contract, 5, "MIDPOINT", True, [])
 
     # Request historical bars
     now = datetime.now().strftime("%Y%m%d %H:%M:%S")
-    client.reqHistoricalData(3, contract, now, '2 w', '1 day',
-                             'MIDPOINT', False, 1, False, [])
-    client.reqHistoricalData(3, contract, now, '1 w', '1 min',
-                             'MIDPOINT', False, 1, False, [])
+    client.reqHistoricalData(
+        3, contract, now, "2 w", "1 day", "MIDPOINT", False, 1, False, []
+    )
+    client.reqHistoricalData(
+        3, contract, now, "1 w", "1 min", "MIDPOINT", False, 1, False, []
+    )
     # Request fundamental data
-    client.reqFundamentalData(4, contract, 'ReportSnapshot', [])
+    client.reqFundamentalData(4, contract, "ReportSnapshot", [])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # main()
     read_data_fq()
