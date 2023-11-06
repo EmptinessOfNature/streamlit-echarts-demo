@@ -164,11 +164,11 @@ def gupiao_line_race():
     countries = [
         # "105.QQQ",
         "分时图"
-        # ,"标记点1"
+        # "标记点n"
     ]
     countries_2 = [
         # "标记点1",
-        'XG'
+        "XG"
     ]
 
     datasetWithFilters = [

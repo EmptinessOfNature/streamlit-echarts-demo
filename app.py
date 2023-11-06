@@ -44,7 +44,14 @@ def penxingdi(data):
     data["XG_IN"] = 1 * (data["JW"] < 0)
     data["XG_OUT"] = -1 * (data["JW"] > 100)
     data["XG"] = data["XG_IN"] + data["XG_OUT"]
-    data.loc[data.XG == 1, 'Code'] = 'XG'
+    data_dot = data[data.XG==1]
+    data_dot.Code='XG'
+    data=data.append(data_dot,ignore_index=True)
+    # data.insert()
+    # data.loc[data.XG == 1, 'Code'] = 'XG'
+    # for i in range(data.shape[0]):
+    #     if data.XG[i] ==1 :
+    #         data.insert()
     print('5,30分钟盆形底部策略')
     return data[[
                             "dt",
