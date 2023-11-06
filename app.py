@@ -127,6 +127,7 @@ def main():
                     st.write("股票代码错误，请重试")
          # 按钮
         if st.button("盈透"):
+            # v2盈透历史分时图
 
             print('按下button盈透'+str(datetime.now()))
             if len(stockCode) < 1:
@@ -182,6 +183,11 @@ def main():
             f.close()
             st.write(stockCode + " 数据处理完成!")
 
+            # v3分时图
+            from ibapi.celve import celve1
+            data, fig = celve1(data)
+
+
 
         if selected_api == "echarts":
             st.caption(
@@ -195,8 +201,11 @@ def main():
             by copying the pyecharts object into st_pyecharts. 
             Pyecharts is still using ECharts 4 underneath, which is why the theming between st_echarts and st_pyecharts is different."""
             )
+    # v2分时图
+    # demo()
 
-    demo()
+    # v3分时图
+    st.plotly_chart(fig)
 
     sourcelines, _ = inspect.getsourcelines(demo)
     with st.expander("Source Code"):
