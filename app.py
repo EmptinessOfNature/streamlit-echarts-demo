@@ -2,7 +2,9 @@ import inspect
 import os.path
 import textwrap
 import time
-
+import json
+import numpy as np
+import pandas as pd
 import streamlit as st
 
 from demo_echarts import ST_DEMOS
@@ -12,6 +14,49 @@ from ibapi.client import Contract
 from datetime import datetime
 from ibapi.fufei6_exe import SimpleClient
 
+def penxingdi(data):
+
+    def LLV(x, n):
+        return x.rolling(window=n).min()
+
+    def HHV(x, n):
+        return x.rolling(window=n).max()
+
+    def SMA(close, n):
+        weights = np.array(range(1, n + 1))
+        sum_weights = np.sum(weights)
+        res = close.rolling(window=n).apply(
+            lambda x: np.sum(weights * x) / sum_weights, raw=False
+        )
+        return res
+
+    ne = 45
+    m1e = 15
+    m2e = 15
+    data["RSVM"] = (
+            (data["close"] - LLV(data["low"], ne))
+            / (HHV(data["high"], ne) - LLV(data["low"], ne))
+            * 100
+    )
+    data["KW"] = SMA(data["RSVM"], m1e)
+    data["DW"] = SMA(data["KW"], m2e)
+    data["JW"] = 3 * data["KW"] - 2 * data["DW"]
+    data["XG_IN"] = 1 * (data["JW"] < 0)
+    data["XG_OUT"] = -1 * (data["JW"] > 100)
+    data["XG"] = data["XG_IN"] + data["XG_OUT"]
+    data.loc[data.XG == 1, 'Code'] = 'XG'
+    print('5,30分钟盆形底部策略')
+    return data[[
+                            "dt",
+                            "open",
+                            "close",
+                            "high",
+                            "low",
+                            "vol",
+                            "cje",
+                            "zxj",
+                            "Code",
+                        ]]
 
 def main():
     st.title("股票交易回测123")
@@ -105,6 +150,31 @@ def main():
                 f.write(ret)
 
             st.write(stockCode + " 数据加载完成!")
+            with open("./data/historicalData_j.json") as f:
+                raw_data = json.load(f)
+                data=pd.DataFrame(raw_data[1:],columns=raw_data[0])
+                data=penxingdi(data)
+                print(data)
+            data_list = data.values.tolist()
+            data_list.insert(
+                0,
+                [
+                    "dt",
+                    "open",
+                    "close",
+                    "high",
+                    "low",
+                    "vol",
+                    "cje",
+                    "zxj",
+                    "Code",
+                ],
+            )
+            f = open("./data/historicalData_dot.json", "w")
+            f.write(str(data_list).replace("'", '"'))
+            f.close()
+            st.write(stockCode + " 数据处理完成!")
+
 
         if selected_api == "echarts":
             st.caption(

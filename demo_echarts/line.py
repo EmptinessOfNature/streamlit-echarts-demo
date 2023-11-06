@@ -1,6 +1,7 @@
 import json
 from streamlit_echarts import st_echarts
 from streamlit_echarts import JsCode
+import numpy as np
 
 
 def render_basic_line_chart():
@@ -150,22 +151,25 @@ def render_stacked_area_chart():
     }
     st_echarts(options=options, height="400px")
 
-
 def gupiao_line_race():
     # 股票linerace的代码
     # with open("./data/105.QQQ.json") as f:
     try:
-        with open("./data/historicalData_j.json") as f:
+        with open("./data/historicalData_dot.json") as f:
             raw_data = json.load(f)
+            print(1)
     except:
         with open("./data/105.QQQ.json") as f:
             raw_data = json.load(f)
     countries = [
         # "105.QQQ",
         "分时图"
-        ,"标记点1"
+        # ,"标记点1"
     ]
-    countries_2 = ["标记点1"]
+    countries_2 = [
+        # "标记点1",
+        'XG'
+    ]
 
     datasetWithFilters = [
         {
@@ -184,10 +188,27 @@ def gupiao_line_race():
         for country in countries
     ]
 
+    datasetWithFilters_2 = [
+        {
+            "id": f"dataset_{country}",
+            "fromDatasetId": "dataset_raw",
+            "transform": {
+                "type": "filter",
+                "config": {
+                    "and": [
+                        # {"dimension": "Year", "gte": 1950},
+                        {"dimension": "Code", "=": country},
+                    ]
+                },
+            },
+        }
+        for country in countries_2
+    ]
+
     seriesList = [
         {
-            # "type": "line",
-            "type": "scatter",
+            "type": "line",
+            # "type": "scatter",
             "datasetId": f"dataset_{country}",
             "showSymbol": False,
             "name": country,
@@ -234,9 +255,8 @@ def gupiao_line_race():
         for country in countries_2
     ]
 
-    # seriesList = seriesList + seriesList_2
-    # print(seriesList_2)
-    print(seriesList)
+    seriesList = seriesList + seriesList_2
+    datasetWithFilters=datasetWithFilters+datasetWithFilters_2
 
     option = {
         "animationDuration": 10000,
