@@ -132,11 +132,6 @@ class SimpleClient(EWrapper, EClient):
                     +',' + str(bar.high) +','+str(bar.low)+','+str(bar.volume)
                     +','+str(bar.volume) + ',' + str(bar.volume) + ','+ "\"" + "分时图" + "\""
                     +'],')
-            if bar.date[9:11] == '02':
-                f.write('[\"' + str(date) + '\"' + ',' + str(bar.open) + ',' + str(bar.close+10)
-                        + ',' + str(bar.high) + ',' + str(bar.low) + ',' + str(bar.volume)
-                        + ',' + str(bar.volume) + ',' + str(bar.volume) + ',' + "\"" + "标记点1" + "\""
-                        + '],')
             # f.write('[\"' + str(date) + '\"' + ',' + str(bar.open) + ',' + str(bar.close - 10)
             #         + ',' + str(bar.high) + ',' + str(bar.low) + ',' + str(bar.volume)
             #         + ',' + str(bar.volume) + ',' + str(bar.volume) + ',' + "\"" + "标记点2" + "\""

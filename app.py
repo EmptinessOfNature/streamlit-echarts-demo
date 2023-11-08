@@ -44,11 +44,14 @@ def penxingdi(data):
     data["XG_IN"] = 1 * (data["JW"] < 0)
     data["XG_OUT"] = -1 * (data["JW"] > 100)
     data["XG"] = data["XG_IN"] + data["XG_OUT"]
+    '''
+    用于分时图v2，增加XG行
     data_dot = data[data.XG==1]
     data_dot.Code='XG'
     data=data.append(data_dot,ignore_index=True)
+    '''
     # data.insert()
-    # data.loc[data.XG == 1, 'Code'] = 'XG'
+    data.loc[data.XG == 1, 'Code'] = 'XG'
     # for i in range(data.shape[0]):
     #     if data.XG[i] ==1 :
     #         data.insert()
@@ -186,6 +189,68 @@ def main():
             # v3分时图
             from ibapi.celve import celve1
             data, fig = celve1(data)
+
+        # 5、30分钟
+        if st.button("盈透5min盆形底"):
+            # v2盈透历史分时图
+
+            print('按下button盈透'+str(datetime.now()))
+            if len(stockCode) < 1:
+                st.write("股票代码错误，请重试")
+            st.write('使用盈透数据，数据加载中'+stockCode)
+            if client == '':
+                client = SimpleClient('127.0.0.1', 7497, 3)
+                print('新建client')
+            client.reqCurrentTime()
+            if os.path.isfile('data/historicalData.json'):
+                os.remove('data/historicalData.json')
+
+            contract = Contract()
+            # contract.symbol = "TSLA"
+            contract.symbol = stockCode
+            contract.secType = "STK"
+            contract.currency = "USD"
+            # In the API side, NASDAQ is always defined as ISLAND in the exchange field
+            contract.exchange = "ISLAND"
+            now = datetime.now().strftime("%Y%m%d %H:%M:%S")
+            req_id = int(datetime.now().strftime("%Y%m%d"))
+            client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'MIDPOINT', False, 1, False, [])
+            time.sleep(5)
+            print('断开client')
+            client.disconnect()
+            ret='[["dt", "open", "close", "high", "low", "vol", "cje", "zxj", "Code"],'+open('data/historicalData.json').readline()[:-1]+']'
+            with open('data/historicalData_j.json','w') as f:
+                f.write(ret)
+
+            st.write(stockCode + " 数据加载完成!")
+            with open("./data/historicalData_j.json") as f:
+                raw_data = json.load(f)
+                data=pd.DataFrame(raw_data[1:],columns=raw_data[0])
+                data=penxingdi(data)
+                print(data)
+            data_list = data.values.tolist()
+            data_list.insert(
+                0,
+                [
+                    "dt",
+                    "open",
+                    "close",
+                    "high",
+                    "low",
+                    "vol",
+                    "cje",
+                    "zxj",
+                    "Code",
+                ],
+            )
+            f = open("./data/historicalData_dot.json", "w")
+            f.write(str(data_list).replace("'", '"'))
+            f.close()
+            st.write(stockCode + " 数据处理完成!")
+
+            # v3分时图
+            from ibapi.celve import celve_5min
+            data, fig = celve_5min(data)
 
 
 
