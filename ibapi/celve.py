@@ -8,16 +8,17 @@ import numpy as np
 from MyTT import *
 
 
-def plot_cand_volume(data, dt_breaks):
+
+def plot_cand_volume(data,dt_breaks):
     # Create subplots and mention plot grid size
     fig = make_subplots(
-        rows=4,
+        rows=5,
         cols=1,
         # row_heights=[1,0.5,0.5,0.5],
         shared_xaxes=True,
         vertical_spacing=0.03,
         subplot_titles=(""),
-        row_width=[2,1,1,7],
+        row_width=[1,1,1,1,6],
     )
     print('测试k线')
     print(data)
@@ -64,11 +65,18 @@ def plot_cand_volume(data, dt_breaks):
         go.Bar(x=data["dt"], y=data["vol"], showlegend=False), row=2, col=1
     )
 
+    # 绘制策略点5分钟盆型底
+    fig.add_trace(go.Bar(x=data["dt"], y=[1]*data.shape[0],marker=dict(color=data["XG_5min"]), showlegend=False), row=3, col=1)
+    # fig.add_trace(go.Bar(x=data["dt"], y=[data["XG_5min"],data["XG_30min"]], showlegend=False), row=3, col=1)
+
+    # fig.add_trace(go.Bar(x=data["dt"], y=data["XG_30min"],marker=dict(color=data["XG_30min"]), showlegend=False), row=4, col=1)
+    fig.add_trace(go.Bar(x=data["dt"], y=[1]*data.shape[0], marker=dict(color=data["XG_30min"]), showlegend=False),
+                  row=4, col=1)
+
     # 绘制策略点
-    fig.add_trace(go.Bar(x=data["dt"], y=data["XG"], showlegend=False), row=3, col=1)
 
     fig.add_trace(
-        go.Scatter(x=data["dt"], y=data["JW"], showlegend=False), row=4, col=1
+        go.Scatter(x=data["dt"], y=data["JW"], showlegend=False), row=5, col=1
     )
 
 
@@ -424,6 +432,7 @@ def celve1(data):
     return data, fig
 
 def celve_5min(data):
+    data_30min = celve_30min(data.copy(deep=True))
     dt_all = pd.date_range(
         start=data["dt"].iloc[0], end=data["dt"].iloc[-1], freq="1min"
     )
@@ -457,13 +466,64 @@ def celve_5min(data):
     data_5min['JW'] = (3 * data_5min['KW'] - 2 * data_5min['DW'])
     data_5min['XG_OUT'] = -1 * (data_5min['JW'] > 100)
 
+    data_5min['XG_5min'] = data_5min['XG_IN'] + data_5min['XG_OUT']
+    data_30min = data_30min.rename(columns={'XG': 'XG_30min'})
+    data_30min.XG_30min.fillna(0,inplace=True)
+    data_5min = data_5min.merge(data_30min[['dt','XG_30min']],how='left',on='dt')
+
+    data_5min.index=range(data_5min.shape[0])
+
+    print("data_5min")
+    print(data_5min)
+
+
+
+    fig = plot_cand_volume(data_5min,dt_breaks)
+
+
+    return data, fig
+
+def celve_30min(data):
+    dt_all = pd.date_range(
+        start=data["dt"].iloc[0], end=data["dt"].iloc[-1], freq="1min"
+    )
+    dt_all = [d.strftime("%Y-%m-%d %H:%M:%S") for d in dt_all]
+    dt_breaks = list(set(dt_all) - set(data["dt"]))
+
+    # 获取5min数据
+    dt_all_5min = pd.date_range(start=data['dt'].iloc[0], end=data['dt'].iloc[-1], freq='30min')
+    dt_all_5min = [d.strftime("%Y-%m-%d %H:%M:%S") for d in dt_all_5min]
+    data_5min = data.loc[data['dt'].isin(dt_all_5min)]
+
+    # 买入点判断
+    ne = 45
+    m1e = 15
+    m2e = 15
+    data_5min['RSVM'] = (data_5min['close'] - LLV(data_5min['low'], ne)) / (
+                HHV(data_5min['high'], ne) - LLV(data_5min['low'], ne)) * 100
+    data_5min['KW'] = SMA(data_5min['RSVM'], m1e)
+    data_5min['DW'] = SMA(data_5min['KW'], m2e)
+    data_5min['JW'] = (3 * data_5min['KW'] - 2 * data_5min['DW'])
+    data_5min['XG_IN'] = 1 * (data_5min['JW'] < 0)
+
+    # 卖出点判断
+    ne = 45
+    m1e = 15
+    m2e = 15
+    data_5min['RSVM'] = (data_5min['close'] - LLV(data_5min['low'], ne)) / (
+                HHV(data_5min['high'], ne) - LLV(data_5min['low'], ne)) * 100
+    data_5min['KW'] = SMA(data_5min['RSVM'], m1e)
+    data_5min['DW'] = SMA(data_5min['KW'], m2e)
+    data_5min['JW'] = (3 * data_5min['KW'] - 2 * data_5min['DW'])
+    data_5min['XG_OUT'] = -1 * (data_5min['JW'] > 100)
+
     data_5min['XG'] = data_5min['XG_IN'] + data_5min['XG_OUT']
     data_5min.index=range(data_5min.shape[0])
 
     print("data_5min")
     print(data_5min)
 
-    fig = plot_cand_volume(data_5min,dt_breaks)
+    # fig = plot_cand_volume(data_5min,dt_breaks)
 
 
-    return data, fig
+    return data_5min
