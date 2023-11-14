@@ -47,7 +47,22 @@ def celve_5min(data):
     data_30min = data_30min.rename(columns={'XG': 'XG_30min'})
     data_5min = data_5min.merge(data_30min[['dt','XG_30min']],how='left',on='dt')
     data_5min['XG_30min'] = data_5min.XG_30min.fillna(0)
-    
+    data_5min.index = range(data_5min.shape[0])
+
+    index_30min_XG_1 = np.array(data_5min[data_5min['XG_30min']==1].index)
+    index_30min_XG_fu1 = np.array(data_5min[data_5min['XG_30min'] == -1].index)
+
+    for ii in range(1,6):
+        index_30min_XG_1 = np.append(index_30min_XG_1,index_30min_XG_1+ii)
+        index_30min_XG_fu1 = np.append(index_30min_XG_fu1,index_30min_XG_fu1+ii)
+
+    index_30min_XG_1 = index_30min_XG_1.clip(max=data_5min.index.max())
+    index_30min_XG_fu1 = index_30min_XG_fu1.clip(max=data_5min.index.max())
+
+    print('index_30min_XG_1',index_30min_XG_1)
+
+    data_5min.loc[index_30min_XG_1, 'XG_30min'] =1
+    data_5min.loc[index_30min_XG_fu1, 'XG_30min'] = -1
 
     data_5min.index=range(data_5min.shape[0])
 
@@ -127,7 +142,7 @@ def plot_cand_volume(data,dt_breaks):
     #               )
 
     # 走势图
-    fig.add_trace(go.Scatter(x=data["dt"], y=data["close"]), row=1, col=1)
+    fig.add_trace(go.Scatter(x=data["dt"], y=data["close"],showlegend=True,name='分时图'), row=1, col=1)
 
     # # 盆形底买入信号
     # # fig.add_trace(go.Scatter(
@@ -146,34 +161,34 @@ def plot_cand_volume(data,dt_breaks):
     data_new = data[data["XG_IN"] == 1]
     fig.add_trace(go.Scatter(
         x=data_new["dt"],
-        y=data_new["XG_IN"] * data_new["close"] * 1.01, mode='markers', text='👇', marker={"color": "green"}), row=1,
+        y=data_new["XG_IN"] * data_new["close"] * 1.01, mode='markers', text='👇', marker={"color": "green"},showlegend=True,name='盆型底'), row=1,
         col=1)  # 散点大小
 
     data_new2 = data[data["XG_OUT"] * -1 == 1]
     fig.add_trace(go.Scatter(
         x=data_new2["dt"],
-        y=data_new2["XG_OUT"] * data_new2["close"] * (-0.99), mode='markers', text='^', marker={"color": "red"}), row=1,
+        y=data_new2["XG_OUT"] * data_new2["close"] * (-0.99), mode='markers', text='^', marker={"color": "red"},showlegend=True,name='盆型顶'), row=1,
         col=1)  # 散点大小
 
 
 
     # 绘制成交量数据
     fig.add_trace(
-        go.Bar(x=data["dt"], y=data["vol"], showlegend=False), row=2, col=1
+        go.Bar(x=data["dt"], y=data["vol"], showlegend=True,name='成交量'), row=2, col=1
     )
 
     # 绘制策略点5分钟盆型底
-    fig.add_trace(go.Bar(x=data["dt"], y=[1]*data.shape[0],marker=dict(color=data["XG_5min"]), showlegend=False), row=3, col=1)
+    fig.add_trace(go.Bar(x=data["dt"], y=[1]*data.shape[0],marker=dict(color=data["XG_5min"]),showlegend=False,name='5min盆型'), row=3, col=1)
     # fig.add_trace(go.Bar(x=data["dt"], y=[data["XG_5min"],data["XG_30min"]], showlegend=False), row=3, col=1)
 
     # fig.add_trace(go.Bar(x=data["dt"], y=data["XG_30min"],marker=dict(color=data["XG_30min"]), showlegend=False), row=4, col=1)
-    fig.add_trace(go.Bar(x=data["dt"], y=[1]*data.shape[0], marker=dict(color=data["XG_30min"]), showlegend=False),
+    fig.add_trace(go.Bar(x=data["dt"], y=[1]*data.shape[0], marker=dict(color=data["XG_30min"]),showlegend=False,name='30min盆型'),
                   row=4, col=1)
 
     # 绘制策略点
 
     fig.add_trace(
-        go.Scatter(x=data["dt"], y=data["JW"], showlegend=False), row=5, col=1
+        go.Scatter(x=data["dt"], y=data["JW"], showlegend=True,name='5min盆型曲线'), row=5, col=1
     )
 
 
