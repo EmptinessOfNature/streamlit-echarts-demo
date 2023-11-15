@@ -33,9 +33,6 @@ class EReader(Thread):
             while self.conn.isConnected():
 
                 data = self.conn.recvMsg()
-                f = open('./ui_database.txt','a')
-                f.write(str(data))
-                f.write('\n')
                 logger.debug("reader loop, recvd size %d", len(data))
                 buf += data
 

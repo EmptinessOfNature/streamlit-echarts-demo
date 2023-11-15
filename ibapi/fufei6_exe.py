@@ -27,8 +27,6 @@ class SimpleClient(EWrapper, EClient):
     @iswrapper
     def currentTime(self, cur_time):
         t = datetime.fromtimestamp(cur_time)
-        with open('./currentTime','a') as f:
-            f.write(str(t)+'\n')
         print('Current timelpy: {}'.format(t))
 
     @iswrapper
