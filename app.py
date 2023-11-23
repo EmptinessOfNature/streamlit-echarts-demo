@@ -67,8 +67,11 @@ def main():
             # In the API side, NASDAQ is always defined as ISLAND in the exchange field
             contract.exchange = "ISLAND"
             now = datetime.now().strftime("%Y%m%d %H:%M:%S")
+            # import pytz
+            # now = datetime.now().astimezone(pytz.timezone('America/New_York')).strftime("%Y%m%d %H:%M:%S")
+            # now = '20231119 12:00:00 US/Eastern'
             req_id = int(datetime.now().strftime("%Y%m%d"))
-            client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'MIDPOINT', False, 1, False, [])
+            client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'TRADES', False, 1, False, [])
             time.sleep(5)
             print('断开client')
             client.disconnect()

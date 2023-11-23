@@ -10,6 +10,7 @@ from MyTT import *
 
 def celve_5min(data):
     data_30min = celve_30min(data.copy(deep=True))
+    data_nm = celve_nm(data.copy(deep=True))
     dt_all = pd.date_range(
         start=data["dt"].iloc[0], end=data["dt"].iloc[-1], freq="1min"
     )
@@ -52,6 +53,7 @@ def celve_5min(data):
     index_30min_XG_1 = np.array(data_5min[data_5min['XG_30min']==1].index)
     index_30min_XG_fu1 = np.array(data_5min[data_5min['XG_30min'] == -1].index)
 
+    # 补齐30分钟盆型底的空缺
     for ii in range(1,6):
         index_30min_XG_1 = np.append(index_30min_XG_1,index_30min_XG_1+ii)
         index_30min_XG_fu1 = np.append(index_30min_XG_fu1,index_30min_XG_fu1+ii)
@@ -65,6 +67,10 @@ def celve_5min(data):
     data_5min.loc[index_30min_XG_fu1, 'XG_30min'] = -1
 
     data_5min.index=range(data_5min.shape[0])
+
+    data_5min['X_24'] = data_nm['X_24']
+    data_5min['X_25'] = data_nm['X_25']
+
 
     print("data_5min")
     print(data_5min)
@@ -170,6 +176,20 @@ def plot_cand_volume(data,dt_breaks):
         y=data_new2["XG_OUT"] * data_new2["close"] * (-0.99), mode='markers', text='^', marker={"color": "red"},showlegend=True,name='盆型顶'), row=1,
         col=1)  # 散点大小
 
+    data_nm24 = data[data['X_24']==1]
+    print('data_nm_X24',data['X_24'].sum())
+    fig.add_trace(go.Scatter(
+        x=data_nm24["dt"],
+        y=data_nm24["X_24"] * data_nm24["close"] * (1.01), mode='markers', text='+', marker={"color": "red"},showlegend=True,name='nm策略24'), row=1,
+        col=1)  # 散点大小
+
+    data_nm25 = data[data['X_25']==1]
+    print('data_nm_X25',data['X_25'].sum())
+    fig.add_trace(go.Scatter(
+        x=data_nm25["dt"],
+        y=data_nm25["X_25"] * data_nm24["close"] * (1.01), mode='markers', text='+', marker={"color": "green"},showlegend=True,name='nm策略25'), row=1,
+        col=1)  # 散点大小
+
 
 
     # 绘制成交量数据
@@ -243,7 +263,7 @@ def plot_cand_volume(data,dt_breaks):
 
 
 
-def celve1(data):
+def celve_nm(data):
     dt_all = pd.date_range(
         start=data["dt"].iloc[0], end=data["dt"].iloc[-1], freq="1min"
     )
@@ -252,47 +272,47 @@ def celve1(data):
     # 绘制 复杂k线图
 
     # 5、30min买入、卖出点判断
-    ne = 45
-    m1e = 15
-    m2e = 15
-    data["RSVM"] = (
-        (data["close"] - LLV(data["low"], ne))
-        / (HHV(data["high"], ne) - LLV(data["low"], ne))
-        * 100
-    )
-    data["KW"] = SMA(data["RSVM"], m1e)
-    data["DW"] = SMA(data["KW"], m2e)
-    data["JW"] = 3 * data["KW"] - 2 * data["DW"]
-    data["XG_IN"] = 1 * (data["JW"] < 0)
-    data["XG_OUT"] = -1 * (data["JW"] > 100)
-    data["XG"] = data["XG_IN"] + data["XG_OUT"]
-    print('5,30分钟盆形底部策略')
-
-    # 分时图nm
-    '''
-    data["dt"] = pd.to_datetime(data["dt"])
-    data["year"] = data["dt"].apply(lambda x: x.year)
-    data["month"] = data["dt"].apply(lambda x: x.month)
-    data["day"] = data["dt"].apply(lambda x: x.day)
-    data["hour"] = data["dt"].apply(lambda x: x.hour)
-    data["minute"] = data["dt"].apply(lambda x: x.minute)
-    data["second"] = data["dt"].apply(lambda x: x.second)
-    data["yyyymmdd"] = data["dt"].apply(
-        lambda x: str(x.year)
-        + str("" if x.month >= 10 else "0")
-        + str(x.month)
-        + str("" if x.day >= 10 else "0")
-        + str(x.day)
-    )
-    data["yyyymmdd_lst1d"] = data.set_index("dt").shift(-1, freq="D").index.day
-    data["hhmmss"] = data["dt"].apply(
-        lambda x: str("" if x.hour >= 10 else "0")
-        + str(x.hour)
-        + str("" if x.minute >= 10 else "0")
-        + str(x.minute)
-        + str("" if x.second >= 10 else "0")
-        + str(x.second)
-    )
+    # ne = 45
+    # m1e = 15
+    # m2e = 15
+    # data["RSVM"] = (
+    #     (data["close"] - LLV(data["low"], ne))
+    #     / (HHV(data["high"], ne) - LLV(data["low"], ne))
+    #     * 100
+    # )
+    # data["KW"] = SMA(data["RSVM"], m1e)
+    # data["DW"] = SMA(data["KW"], m2e)
+    # data["JW"] = 3 * data["KW"] - 2 * data["DW"]
+    # data["XG_IN"] = 1 * (data["JW"] < 0)
+    # data["XG_OUT"] = -1 * (data["JW"] > 100)
+    # data["XG"] = data["XG_IN"] + data["XG_OUT"]
+    # print('5,30分钟盆形底部策略')
+    #
+    # # 分时图nm
+    #
+    # data["dt"] = pd.to_datetime(data["dt"])
+    # data["year"] = data["dt"].apply(lambda x: x.year)
+    # data["month"] = data["dt"].apply(lambda x: x.month)
+    # data["day"] = data["dt"].apply(lambda x: x.day)
+    # data["hour"] = data["dt"].apply(lambda x: x.hour)
+    # data["minute"] = data["dt"].apply(lambda x: x.minute)
+    # data["second"] = data["dt"].apply(lambda x: x.second)
+    # data["yyyymmdd"] = data["dt"].apply(
+    #     lambda x: str(x.year)
+    #     + str("" if x.month >= 10 else "0")
+    #     + str(x.month)
+    #     + str("" if x.day >= 10 else "0")
+    #     + str(x.day)
+    # )
+    # data["yyyymmdd_lst1d"] = data.set_index("dt").shift(-1, freq="D").index.day
+    # data["hhmmss"] = data["dt"].apply(
+    #     lambda x: str("" if x.hour >= 10 else "0")
+    #     + str(x.hour)
+    #     + str("" if x.minute >= 10 else "0")
+    #     + str(x.minute)
+    #     + str("" if x.second >= 10 else "0")
+    #     + str(x.second)
+    # )
 
     # nm策略
     """
@@ -322,14 +342,15 @@ def celve1(data):
 
     # nm策略重写
     # 改成纽约时间
-    import pytz
-    data.dt_sh = datetime.datetime.now()
-    data.dt_sh = data.dt.apply(lambda x: x.to_pydatetime().astimezone(pytz.timezone('America/New_York')))
+    # import pytz
+    # data.dt_sh = datetime.datetime.now()
+    # data.dt_sh = data.dt.apply(lambda x: x.to_pydatetime().astimezone(pytz.timezone('America/New_York')))
     N = 5
     M = 15
     data['X_1'] = data['close']
-    ZSTJJ = data.groupby(data.yyyymmdd).close.mean()
-    data['X_2'] = pd.merge(data,ZSTJJ,on='yyyymmdd',how='left').iloc[:,-1]
+    # ZSTJJ = data.groupby(data.yyyymmdd).close.mean()
+    # data['X_2'] = pd.merge(data,ZSTJJ,on='yyyymmdd',how='left').iloc[:,-1]
+    data['X_2'] = data['close'].expanding().mean()
     data['X_3'] = (data.close * data.vol).sum() / data.vol.sum()
     data['X_14'] = REF(data.close, 1)
     data['X_15'] = SMA(MAX(data.close - data.X_14, 0), 14) / SMA(ABS(data.close - data.X_14), 14) * 100
@@ -359,6 +380,9 @@ def celve1(data):
         tmp = COUNT(data.close > REF(data.close, 1), data.tmp2[i])[i]
         data.loc[i, 'tmp3'] = tmp
     data['X_25'] = SUM(data.X_23, 0) * CROSS(data.tmp3, 0.5)[1:]
+    print('nm点位计算完毕')
+    return data
+    '''
     # X1: CONST(SUM(IF(X_24, REF(CLOSE, 1), DRAWNULL), 0)), DOTLINE, COLORYELLOW;
     data['X1'] = CONST(SUM(IF(data.X_24,REF(data.close,1),np.nan),0))
     # Z1: CONST(SUM(IF(X_25, REF(CLOSE, 1), DRAWNULL), 0)), DOTLINE, COLORGREEN;
@@ -508,8 +532,16 @@ def celve1(data):
     data['V11'] = 3*SMA((data.close-LLV(data.low,55))/(HHV(data.high,55)-LLV(data.low,55))*100,5) - 2 * SMA(SMA((data.close-LLV(data.low,55))/(HHV(data.high,55)-LLV(data.low,55))*100,5),3)
 
     # 趋势线 := EMA(V11, 3);
-    '''
+
     fig = plot_cand_volume(data, dt_breaks)
 
     return data, fig
+    '''
 
+
+if __name__=='__main__':
+    import json
+    with open("../data/historicalData_j.json") as f:
+        raw_data = json.load(f)
+        data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+    _,__ = celve_nm(data)
