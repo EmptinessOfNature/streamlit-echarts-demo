@@ -72,6 +72,8 @@ def main():
             # now = '20231119 12:00:00 US/Eastern'
             req_id = int(datetime.now().strftime("%Y%m%d"))
             client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'TRADES', False, 1, False, [])
+            # client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'ADJUSTED_LAST', False, 1, False, [])
+
             time.sleep(5)
             print('断开client')
             client.disconnect()

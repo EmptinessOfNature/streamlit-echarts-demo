@@ -9,8 +9,12 @@ from MyTT import *
 
 
 def celve_5min(data):
+    print(1)
+    data = data[(data['dt'].str[11:13].astype(int) + data['dt'].str[14:16].astype(int) / 60 < 4.5) | (
+                data['dt'].str[11:13].astype(int) + data['dt'].str[14:16].astype(int) / 60 > 22.5)].reset_index(drop=True)
     data_30min = celve_30min(data.copy(deep=True))
     data_nm = celve_nm(data.copy(deep=True))
+
     dt_all = pd.date_range(
         start=data["dt"].iloc[0], end=data["dt"].iloc[-1], freq="1min"
     )
@@ -70,6 +74,7 @@ def celve_5min(data):
 
     data_5min['X_24'] = data_nm['X_24']
     data_5min['X_25'] = data_nm['X_25']
+    data_5min['vol']  =data_nm['vol']
 
 
     print("data_5min")
@@ -138,9 +143,6 @@ def plot_cand_volume(data,dt_breaks):
         subplot_titles=(""),
         row_width=[1,1,1,1,6],
     )
-    print('测试k线')
-    print(data)
-
     # 绘制k数据
     # fig.add_trace(go.Candlestick(x=data["dt"], open=data["open"], high=data["high"],
     #                              low=data["low"], close=data["close"], name=""),
@@ -246,7 +248,7 @@ def plot_cand_volume(data,dt_breaks):
         tickformat="%Y-%m-%d %H:%M:%S",
         rangebreaks=[
             # dict(bounds=[8, 16], pattern="hour"),
-            dict(bounds=[9, 17], pattern="hour"),
+            dict(bounds=[4.5, 22.5], pattern="hour"),
             dict(bounds=[6, 1], pattern="day of week"),
         ],
     )
@@ -345,6 +347,11 @@ def celve_nm(data):
     # import pytz
     # data.dt_sh = datetime.datetime.now()
     # data.dt_sh = data.dt.apply(lambda x: x.to_pydatetime().astimezone(pytz.timezone('America/New_York')))
+    # 剔除vol异常大值
+    # n_large_vol =  data.vol.nlargest(10).iloc[-1]
+    # data['vol']=data['vol'].clip(upper = n_large_vol)
+    # print('nmdeug测试vol')
+    # print(data['vol'].max())
     N = 5
     M = 15
     data['X_1'] = data['close']
@@ -381,6 +388,7 @@ def celve_nm(data):
         data.loc[i, 'tmp3'] = tmp
     data['X_25'] = SUM(data.X_23, 0) * CROSS(data.tmp3, 0.5)[1:]
     print('nm点位计算完毕')
+    print(data.X_23.sum())
     return data
     '''
     # X1: CONST(SUM(IF(X_24, REF(CLOSE, 1), DRAWNULL), 0)), DOTLINE, COLORYELLOW;
@@ -544,4 +552,5 @@ if __name__=='__main__':
     with open("../data/historicalData_j.json") as f:
         raw_data = json.load(f)
         data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
-    _,__ = celve_nm(data)
+    __=celve_5min(data)
+    _ = celve_nm(data)
