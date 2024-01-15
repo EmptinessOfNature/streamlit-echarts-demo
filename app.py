@@ -43,6 +43,7 @@ def main():
         # 输入股票代码框
         stockCode = st.text_input("Stock Code:")
         conn = {"SC": stockCode}
+        stockDate = st.text_input("Stock Date（例：01-10）")
         # 按钮
         # 5、30分钟
         if st.button("盈透5、30min盆形底"):
@@ -85,6 +86,11 @@ def main():
             with open("./data/historicalData_j.json") as f:
                 raw_data = json.load(f)
                 data=pd.DataFrame(raw_data[1:],columns=raw_data[0])
+                stockDate_plus1 = stockDate[:3]+str(int(stockDate[3:5])+1)
+
+                data=data[((data['dt'].str.contains(stockDate)) & ((data['dt'].str[11:13]+data['dt'].str[14:16]).astype(int)>=2230))|((data['dt'].str.contains(stockDate_plus1)) & ((data['dt'].str[11:13]+data['dt'].str[14:16]).astype(int)<=500))]
+                if len(data)<=100:
+                    st.write("此股票此日期没有数据！请重新输入日期")
             # v3分时图
             from ibapi.celve import celve_5min
             data, fig = celve_5min(data)
