@@ -14,9 +14,10 @@ from ibapi.client import Contract
 from datetime import datetime
 from ibapi.fufei6_exe import SimpleClient
 
+
 def main():
     st.title("NBNB123")
-    client = ''
+    client = ""
 
     with st.sidebar:
         st.header("Configuration")
@@ -49,16 +50,16 @@ def main():
         if st.button("盈透5、30min盆形底"):
             # v2盈透历史分时图
 
-            print('按下button盈透'+str(datetime.now()))
+            print("按下button盈透" + str(datetime.now()))
             if len(stockCode) < 1:
                 st.write("股票代码错误，请重试")
-            st.write('使用盈透数据，数据加载中'+stockCode)
-            if client == '':
-                client = SimpleClient('127.0.0.1', 7497, 3)
-                print('新建client')
+            st.write("使用盈透数据，数据加载中" + stockCode)
+            if client == "":
+                client = SimpleClient("127.0.0.1", 7497, 3)
+                print("新建client")
             client.reqCurrentTime()
-            if os.path.isfile('data/historicalData.json'):
-                os.remove('data/historicalData.json')
+            if os.path.isfile("data/historicalData.json"):
+                os.remove("data/historicalData.json")
 
             contract = Contract()
             # contract.symbol = "TSLA"
@@ -72,30 +73,50 @@ def main():
             # now = datetime.now().astimezone(pytz.timezone('America/New_York')).strftime("%Y%m%d %H:%M:%S")
             # now = '20231119 12:00:00 US/Eastern'
             req_id = int(datetime.now().strftime("%Y%m%d"))
-            client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'TRADES', False, 1, False, [])
+            client.reqHistoricalData(
+                req_id, contract, now, "1 w", "1 min", "TRADES", False, 1, False, []
+            )
             # client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'ADJUSTED_LAST', False, 1, False, [])
 
             time.sleep(5)
-            print('断开client')
+            print("断开client")
             client.disconnect()
-            ret='[["dt", "open", "close", "high", "low", "vol", "cje", "zxj", "Code"],'+open('data/historicalData.json').readline()[:-1]+']'
-            with open('data/historicalData_j.json','w') as f:
+            ret = (
+                '[["dt", "open", "close", "high", "low", "vol", "cje", "zxj", "Code"],'
+                + open("data/historicalData.json").readline()[:-1]
+                + "]"
+            )
+            with open("data/historicalData_j.json", "w") as f:
                 f.write(ret)
 
             st.write(stockCode + " 数据加载完成!")
             with open("./data/historicalData_j.json") as f:
                 raw_data = json.load(f)
-                data=pd.DataFrame(raw_data[1:],columns=raw_data[0])
-                stockDate_plus1 = stockDate[:3]+str(int(stockDate[3:5])+1)
-
-                data=data[((data['dt'].str.contains(stockDate)) & ((data['dt'].str[11:13]+data['dt'].str[14:16]).astype(int)>=2230))|((data['dt'].str.contains(stockDate_plus1)) & ((data['dt'].str[11:13]+data['dt'].str[14:16]).astype(int)<=500))]
-                if len(data)<=100:
+                data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+                # 数据只保留stockDate的17:00到次日的09:00
+                stockDate_plus1 = stockDate[:3] + str(int(stockDate[3:5]) + 1)
+                data = data[
+                    (
+                        (data["dt"].str.contains(stockDate))
+                        & (
+                            (data["dt"].str[11:13] + data["dt"].str[14:16]).astype(int)
+                            >= 2230
+                        )
+                    )
+                    | (
+                        (data["dt"].str.contains(stockDate_plus1))
+                        & (
+                            (data["dt"].str[11:13] + data["dt"].str[14:16]).astype(int)
+                            <= 500
+                        )
+                    )
+                ]
+                if len(data) <= 100:
                     st.write("此股票此日期没有数据！请重新输入日期")
             # v3分时图
             from ibapi.celve import celve_5min
+
             data, fig = celve_5min(data)
-
-
 
         if selected_api == "echarts":
             st.caption(
