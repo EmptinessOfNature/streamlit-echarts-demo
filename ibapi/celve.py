@@ -9,36 +9,72 @@ from MyTT import *
 import ibapi.indicator as i
 
 
-def celve_5min(data):
-    print(1)
-    # data = data[(data['dt'].str[11:13].astype(int) + data['dt'].str[14:16].astype(int) / 60 < 4.5) | (
-    #             data['dt'].str[11:13].astype(int) + data['dt'].str[14:16].astype(int) / 60 > 22.5)].reset_index(drop=True)
-    data = data.reset_index(drop=True)
+def celve_5min(data, stockCode,stockDate):
+    # 数据只保留stockDate的17:00到次日的09:00
+    stockDate_plus1 = stockDate[:3] + str(int(stockDate[3:5]) + 1)
+    data_1d = data[
+        (
+                (data["dt"].str.contains(stockDate))
+                & (
+                        (data["dt"].str[11:13] + data["dt"].str[14:16]).astype(int)
+                        >= 2230
+                )
+        )
+        | (
+                (data["dt"].str.contains(stockDate_plus1))
+                & (
+                        (data["dt"].str[11:13] + data["dt"].str[14:16]).astype(int)
+                        <= 500
+                )
+        )
+        ]
+    data_1d = data_1d.reset_index(drop=True)
     # data_30min = celve_30min(data.copy(deep=True))
 
     dt_all = pd.date_range(
-        start=data["dt"].iloc[0], end=data["dt"].iloc[-1], freq="1min"
+        start=data_1d["dt"].iloc[0], end=data_1d["dt"].iloc[-1], freq="1min"
     )
     dt_all = [d.strftime("%Y-%m-%d %H:%M:%S") for d in dt_all]
-    dt_breaks = list(set(dt_all) - set(data["dt"]))
+    dt_breaks = list(set(dt_all) - set(data_1d["dt"]))
 
     # 获取5min\30min数据
+    '''
     dt_all_5min = pd.date_range(
-        start=data["dt"].iloc[0], end=data["dt"].iloc[-1], freq="5min"
+        start=data_1d["dt"].iloc[0], end=data_1d["dt"].iloc[-1], freq="5min"
     )
     dt_all_5min = [d.strftime("%Y-%m-%d %H:%M:%S") for d in dt_all_5min]
-    data_5min = data.loc[data["dt"].isin(dt_all_5min)]
+    data_5min = data_1d.loc[data_1d["dt"].isin(dt_all_5min)]
 
     dt_all_30min = pd.date_range(
-        start=data["dt"].iloc[0], end=data["dt"].iloc[-1], freq="30min"
+        start=data_1d["dt"].iloc[0], end=data_1d["dt"].iloc[-1], freq="30min"
     )
     dt_all_30min = [d.strftime("%Y-%m-%d %H:%M:%S") for d in dt_all_30min]
-    data_30min = data.loc[data["dt"].isin(dt_all_30min)]
+    data_30min = data_1d.loc[data_1d["dt"].isin(dt_all_30min)]
+    '''
+
+    data_5min = data.groupby(data.index // 5).agg({'dt': 'first',
+                                             'open': 'first',
+                                             'close': 'last',
+                                             'high': 'max',
+                                             'low': 'min',
+                                             'vol': 'sum',
+                                             'cje': 'sum',
+                                             'zxj': 'sum',
+                                             'Code': 'first'})
+    data_30min = data.groupby(data.index // 30).agg({'dt': 'first',
+                                             'open': 'first',
+                                             'close': 'last',
+                                             'high': 'max',
+                                             'low': 'min',
+                                             'vol': 'sum',
+                                             'cje': 'sum',
+                                             'zxj': 'sum',
+                                             'Code': 'first'})
 
     # 盆形低判断
-    ne = 5
-    m1e = 5
-    m2e = 5
+    ne = 45
+    m1e = 15
+    m2e = 15
     data_5min["RSVM"] = (
         (data_5min["close"] - LLV(data_5min["low"], ne))
         / (HHV(data_5min["high"], ne) - LLV(data_5min["low"], ne))
@@ -57,28 +93,30 @@ def celve_5min(data):
     data_30min["DW"] = SMA(data_30min["KW"], m2e)
     data_30min["JW_30"] = 3 * data_30min["KW"] - 2 * data_30min["DW"]
 
-    data = pd.merge(data, data_5min[['dt', 'JW_5']], how='left', on='dt')
-    data = pd.merge(data, data_30min[['dt', 'JW_30']], how='left', on='dt')
-    for i in range(len(data)):
-        if pd.isna(data.at[i, 'JW_5']):
+    data_1d = pd.merge(data_1d, data_5min[['dt', 'JW_5']], how='left', on='dt')
+    data_1d = pd.merge(data_1d, data_30min[['dt', 'JW_30']], how='left', on='dt')
+    for i in range(len(data_1d)):
+        if pd.isna(data_1d.at[i, 'JW_5']):
             try:
-                tmp = data['JW_5'].iloc[max(0, i - 5):i].dropna().iloc[-1]
+                tmp = data_1d['JW_5'].iloc[max(0, i - 5):i].dropna().iloc[-1]
             except:
                 tmp = np.nan
-            data.at[i, 'JW_5'] = tmp
-        if pd.isna(data.at[i, 'JW_30']):
+            data_1d.at[i, 'JW_5'] = tmp
+        if pd.isna(data_1d.at[i, 'JW_30']):
             try:
-                tmp_30 = data['JW_30'].iloc[max(0, i - 31):i].dropna().iloc[-1]
+                tmp_30 = data_1d['JW_30'].iloc[max(0, i - 31):i].dropna().iloc[-1]
             except:
                 tmp_30 = np.nan
-            data.at[i, 'JW_30'] = tmp_30
+            data_1d.at[i, 'JW_30'] = tmp_30
 
-    data_5min["DI_5min"] = 1 * (data_5min["JW_5"] < 0)
-    data_5min["DING_5min"] = -1 * (data_5min["JW_5"] > 100)
+    data_1d["DI_5min"] = 1 * (data_1d["JW_5"] < 0)
+    data_1d["DING_5min"] = 1 * (data_1d["JW_5"] > 100)
+    data_1d["DI_30min"] = 1 * (data_1d["JW_30"] < 0)
+    data_1d["DING_30min"] = 1 * (data_1d["JW_30"] > 100)
     print(1)
 
     # signal的买卖点判断
-    data["volume"] = data["vol"]
+    data_1d["volume"] = data_1d["vol"]
     (
         icon_1,
         icon_2,
@@ -90,67 +128,24 @@ def celve_5min(data):
         icon_38,
         icon_39,
         icon_41,
-    ) = signal_1(data)
-    data["icon_1"] = icon_1
-    data["icon_2"] = icon_2
-    data["icon_11"] = icon_11
-    data["icon_12"] = icon_12
-    data["icon_13"] = icon_13
-    data["icon_34"] = icon_34
-    data["icon_35"] = icon_35
-    data["icon_38"] = icon_38
-    data["icon_39"] = icon_39
-    data["icon_41"] = icon_41
+    ) = signal_1(data_1d)
+    data_1d["icon_1"] = icon_1
+    data_1d["icon_2"] = icon_2
+    data_1d["icon_11"] = icon_11
+    data_1d["icon_12"] = icon_12
+    data_1d["icon_13"] = icon_13.astype('int')
+    data_1d["icon_34"] = icon_34
+    data_1d["icon_35"] = icon_35
+    data_1d["icon_38"] = icon_38
+    data_1d["icon_39"] = icon_39
+    data_1d["icon_41"] = icon_41.astype('int')
     print(1)
+    file_path = './data_calc/'+stockCode+stockDate+'.csv'
 
-    # 卖出点判断
-    """
-    ne = 45
-    m1e = 15
-    m2e = 15
-    data_5min['RSVM'] = (data_5min['close'] - LLV(data_5min['low'], ne)) / (
-                HHV(data_5min['high'], ne) - LLV(data_5min['low'], ne)) * 100
-    data_5min['KW'] = SMA(data_5min['RSVM'], m1e)
-    data_5min['DW'] = SMA(data_5min['KW'], m2e)
-    data_5min['JW'] = (3 * data_5min['KW'] - 2 * data_5min['DW'])
-    data_5min['XG_OUT'] = -1 * (data_5min['JW'] > 100)
+    data_1d.to_csv(file_path)
+    fig = plot_cand_volume(data_1d, dt_breaks)
 
-    data_5min['XG_5min'] = data_5min['XG_IN'] + data_5min['XG_OUT']
-    data_30min = data_30min.rename(columns={'XG': 'XG_30min'})
-    data_5min = data_5min.merge(data_30min[['dt','XG_30min']],how='left',on='dt')
-    data_5min['XG_30min'] = data_5min.XG_30min.fillna(0)
-    data_5min.index = range(data_5min.shape[0])
-
-    index_30min_XG_1 = np.array(data_5min[data_5min['XG_30min']==1].index)
-    index_30min_XG_fu1 = np.array(data_5min[data_5min['XG_30min'] == -1].index)
-
-    # 补齐30分钟盆型底的空缺
-    for ii in range(1,6):
-        index_30min_XG_1 = np.append(index_30min_XG_1,index_30min_XG_1+ii)
-        index_30min_XG_fu1 = np.append(index_30min_XG_fu1,index_30min_XG_fu1+ii)
-
-    index_30min_XG_1 = index_30min_XG_1.clip(max=data_5min.index.max())
-    index_30min_XG_fu1 = index_30min_XG_fu1.clip(max=data_5min.index.max())
-
-    print('index_30min_XG_1',index_30min_XG_1)
-
-    data_5min.loc[index_30min_XG_1, 'XG_30min'] =1
-    data_5min.loc[index_30min_XG_fu1, 'XG_30min'] = -1
-
-    data_5min.index=range(data_5min.shape[0])
-
-    data_5min['X_24'] = data_nm['X_24']
-    data_5min['X_25'] = data_nm['X_25']
-    data_5min['vol']  =data_nm['vol']
-
-
-    print("data_5min")
-    print(data_5min)
-    """
-
-    fig = plot_cand_volume(data, dt_breaks)
-
-    return data, fig
+    return data_1d, fig
 
 def signal_1(data: pd.DataFrame):
     n = 5
@@ -891,20 +886,8 @@ def celve_nm(data):
 if __name__ == "__main__":
     import json
 
-    with open("../data/historicalData_j.json") as f:
+    with open("../data_ready/10010119.json") as f:
         raw_data = json.load(f)
         data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
-    stockDate = "01-18"
-    stockDate_plus1 = stockDate[:3] + str(int(stockDate[3:5]) + 1)
-    data = data[
-        (
-            (data["dt"].str.contains(stockDate))
-            & ((data["dt"].str[11:13] + data["dt"].str[14:16]).astype(int) >= 2230)
-        )
-        | (
-            (data["dt"].str.contains(stockDate_plus1))
-            & ((data["dt"].str[11:13] + data["dt"].str[14:16]).astype(int) <= 459)
-        )
-    ]
 
-    __ = celve_5min(data)
+    __ = celve_5min(data,stockCode='TSLA',stockDate='01-22')

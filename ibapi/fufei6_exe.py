@@ -123,17 +123,20 @@ class SimpleClient(EWrapper, EClient):
 
     @iswrapper
     def historicalData(self, reqId: int, bar):
-        with open('data/historicalData.json','a') as f:
-            # f.write(str(bar)+'\n')
+        # with open('data/historicalData.json','a') as f:
+        #     # f.write(str(bar)+'\n')
+        #     date = bar.date[0:4] + '-' +bar.date[4:6] +'-'+bar.date[6:8]+' '+bar.date[9:17]
+        #     f.write('[\"'+str(date)+'\"' + ',' + str(bar.open) + ','+str(bar.close)
+        #             +',' + str(bar.high) +','+str(bar.low)+','+str(bar.volume)
+        #             +','+str(bar.volume) + ',' + str(bar.volume) + ','+ "\"" + "分时图" + "\""
+        #             +'],')
+        data_path = 'data/'+str(reqId)+'.json'
+        with open(data_path,'a') as f:
             date = bar.date[0:4] + '-' +bar.date[4:6] +'-'+bar.date[6:8]+' '+bar.date[9:17]
             f.write('[\"'+str(date)+'\"' + ',' + str(bar.open) + ','+str(bar.close)
                     +',' + str(bar.high) +','+str(bar.low)+','+str(bar.volume)
                     +','+str(bar.volume) + ',' + str(bar.volume) + ','+ "\"" + "分时图" + "\""
                     +'],')
-            # f.write('[\"' + str(date) + '\"' + ',' + str(bar.open) + ',' + str(bar.close - 10)
-            #         + ',' + str(bar.high) + ',' + str(bar.low) + ',' + str(bar.volume)
-            #         + ',' + str(bar.volume) + ',' + str(bar.volume) + ',' + "\"" + "标记点2" + "\""
-            #         + '],')
         # print("HistoricalData. ReqId:", reqId, "BarData.", bar)
 
     @iswrapper

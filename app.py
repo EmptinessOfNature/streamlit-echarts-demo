@@ -54,12 +54,8 @@ def main():
             if len(stockCode) < 1:
                 st.write("股票代码错误，请重试")
             st.write("使用盈透数据，数据加载中" + stockCode)
-            if client == "":
-                client = SimpleClient("127.0.0.1", 7497, 3)
-                print("新建client")
-            client.reqCurrentTime()
-            if os.path.isfile("data/historicalData.json"):
-                os.remove("data/historicalData.json")
+            # if os.path.isfile("data/historicalData.json"):
+            #     os.remove("data/historicalData.json")
 
             contract = Contract()
             # contract.symbol = "TSLA"
@@ -72,51 +68,47 @@ def main():
             # import pytz
             # now = datetime.now().astimezone(pytz.timezone('America/New_York')).strftime("%Y%m%d %H:%M:%S")
             # now = '20231119 12:00:00 US/Eastern'
-            req_id = int(datetime.now().strftime("%Y%m%d"))
-            client.reqHistoricalData(
-                req_id, contract, now, "1 w", "1 min", "TRADES", False, 1, False, []
-            )
-            # client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'ADJUSTED_LAST', False, 1, False, [])
 
-            time.sleep(5)
-            print("断开client")
-            client.disconnect()
+            # req_id = int(datetime.now().strftime("%Y%m%d"))
+
+            stock_dict = {'TSLA':'1001','MSFT':'1002','NVDA':'1003','AAPL':'1004','AMZN':'1005','TSM':'1006','NFLX':'1007','GOOG':'1008',
+                          'META':'1009','ASML':'1010','ARKK':'1011','PDD':'1012','NQ':'1013'}
+
+            req_id = int(stock_dict[stockCode]+stockDate.replace('-',''))
+            print('req_id',req_id)
+            data_path = 'data/' + str(req_id) + '.json'
+            data_path_ready = 'data_ready/' + str(req_id) + '.json'
+            if not os.path.isfile(data_path):
+                print("数据不存在，读取得到")
+                if client=='':
+                    client = SimpleClient("127.0.0.1", 7497, 3)
+                    client.reqCurrentTime()
+                    print("新建client")
+                client.reqHistoricalData(
+                    req_id, contract, now, "1 w", "1 min", "TRADES", False, 1, False, []
+                )
+                # client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'ADJUSTED_LAST', False, 1, False, [])
+                time.sleep(5)
+                print("断开client")
+                client.disconnect()
+            else:
+                print('数据已存在，直接读取')
             ret = (
                 '[["dt", "open", "close", "high", "low", "vol", "cje", "zxj", "Code"],'
-                + open("data/historicalData.json").readline()[:-1]
+                + open(data_path).readline()[:-1]
                 + "]"
             )
-            with open("data/historicalData_j.json", "w") as f:
+            with open(data_path_ready, "w") as f:
                 f.write(ret)
 
             st.write(stockCode + " 数据加载完成!")
-            with open("./data/historicalData_j.json") as f:
+            with open(data_path_ready) as f:
                 raw_data = json.load(f)
                 data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
-                # 数据只保留stockDate的17:00到次日的09:00
-                stockDate_plus1 = stockDate[:3] + str(int(stockDate[3:5]) + 1)
-                data = data[
-                    (
-                        (data["dt"].str.contains(stockDate))
-                        & (
-                            (data["dt"].str[11:13] + data["dt"].str[14:16]).astype(int)
-                            >= 2230
-                        )
-                    )
-                    | (
-                        (data["dt"].str.contains(stockDate_plus1))
-                        & (
-                            (data["dt"].str[11:13] + data["dt"].str[14:16]).astype(int)
-                            <= 500
-                        )
-                    )
-                ]
-                if len(data) <= 100:
-                    st.write("此股票此日期没有数据！请重新输入日期")
             # v3分时图
             from ibapi.celve import celve_5min
 
-            data, fig = celve_5min(data)
+            data, fig = celve_5min(data,stockCode,stockDate)
 
         if selected_api == "echarts":
             st.caption(
