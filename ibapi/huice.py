@@ -13,8 +13,8 @@ from MyTT import *
 import ibapi.indicator as i
 
 
-data_name = 'AAPL--1分钟'
-data = pd.read_excel("../data_hist/"+data_name+".xlsx")
+data_name = 'TSLA'
+data = pd.read_csv("../data_hist/"+data_name+".csv")
 print(1)
 
 
@@ -48,7 +48,36 @@ with open(data_path_hist_ready, "w") as f:
     f.write(ret)
 
 print(1)
-def celve_5min(data, stockCode,stockDate,is1d=0):
+def zhiying(data,zhiying_perc=0.005,zhisun_perc=0.005):
+    long_index = data[data['buy_signal']>=1].index
+    short_index = data[data['sell_signal'] >= 1].index
+    long_end_index = []
+    short_end_index = []
+    for i in long_index:
+        long_price = data.iloc[i]['close']
+        high = data.iloc[i]['close']
+        low = data.iloc[i]['close']
+        for j in range(400):
+            if int(data.iloc[i+j]['dt'][11:13])==4 and int(data.iloc[i+j]['dt'][14:16])==30:
+                long_end_index.append(i+j)
+                continue
+            elif data.iloc[i+j]['sell_signal']>= 1:
+                long_end_index.append(i + j)
+                continue
+            else:
+                cur_price =  data.iloc[i+j]['close']
+                if cur_price>high:
+                    high = cur_price
+                if cur_price<low:
+                    low = cur_price
+                if cur_price/high - 1>=zhiying_perc:
+                    long_end_index.append(i + j)
+                    continue
+                if cur_price/low - 1 <=-zhisun_perc:
+                    long_end_index.append(i + j)
+                    continue
+
+def celve_huice(data, stockCode,stockDate,is1d=0):
     # 数据只保留stockDate的17:00到次日的09:00
     if is1d:
         stockDate_plus1 = stockDate[:3] + str(int(stockDate[3:5]) + 1)
@@ -168,8 +197,11 @@ def celve_5min(data, stockCode,stockDate,is1d=0):
     data_1d["icon_39"] = icon_39
     data_1d["icon_41"] = icon_41.astype('int')
 
-    data_1d['buy_signal'] = (data_1d['DI_5min'] * data_1d['DI_30min']) * (1*data_1d['icon_1'] + 2*data_1d['icon_38']+ 3*data_1d['icon_34']+ 4*data_1d['icon_13']+ 5*data_1d['icon_11'])
-    data_1d['sell_signal'] = (data_1d['DING_5min'] * data_1d['DING_30min']) * (1*data_1d['icon_2'] + 2*data_1d['icon_39']+ 3*data_1d['icon_35']+ 4*data_1d['icon_12']+ 5*data_1d['icon_41'])
+    # data_1d['buy_signal'] = (data_1d['DI_5min'] * data_1d['DI_30min']) * (1*data_1d['icon_1'] + 2*data_1d['icon_38']+ 3*data_1d['icon_34']+ 4*data_1d['icon_13']+ 5*data_1d['icon_11'])
+    # data_1d['sell_signal'] = (data_1d['DING_5min'] * data_1d['DING_30min']) * (1*data_1d['icon_2'] + 2*data_1d['icon_39']+ 3*data_1d['icon_35']+ 4*data_1d['icon_12']+ 5*data_1d['icon_41'])
+
+    data_1d['buy_signal'] = (1*data_1d['icon_1'] + 2*data_1d['icon_38']+ 3*data_1d['icon_34']+ 4*data_1d['icon_13']+ 5*data_1d['icon_11'])
+    data_1d['sell_signal'] = (1*data_1d['icon_2'] + 2*data_1d['icon_39']+ 3*data_1d['icon_35']+ 4*data_1d['icon_12']+ 5*data_1d['icon_41'])
 
     print(1)
     file_path = '../data_calc/'+stockCode+stockDate+'.csv'
@@ -177,11 +209,14 @@ def celve_5min(data, stockCode,stockDate,is1d=0):
     data_1d.to_csv(file_path)
     # fig = plot_cand_volume(data_1d, dt_breaks)
 
-    # return data_1d, fig
+    return data_1d
 
 
 with open(data_path_hist_ready) as f:
     raw_data = json.load(f)
     data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+    data = data[data["dt"].str[5:7].astype(int)== 1]
+    print(len(data))
 
-celve_5min(data,'AAPLE','huice',is1d=0)
+data = celve_huice(data,'TSLA','huice',is1d=0)
+zhiying(data)

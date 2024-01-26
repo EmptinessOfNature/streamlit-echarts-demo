@@ -13,6 +13,7 @@ import akshare as ak
 from ibapi.client import Contract
 from datetime import datetime
 from ibapi.fufei6_exe import SimpleClient
+from ibapi.celve import celve_5min
 
 
 def main():
@@ -106,9 +107,17 @@ def main():
                 raw_data = json.load(f)
                 data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
             # v3分时图
-            from ibapi.celve import celve_5min
 
-            data, fig = celve_5min(data,stockCode,stockDate)
+
+            data, fig = celve_5min(data,stockCode,stockDate,show_1d=0)
+
+        if st.button("回测"):
+            data_path_ready = './data_hist/TSLA.json'
+            with open(data_path_ready) as f:
+                raw_data = json.load(f)
+                data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+            # data=data[(data["dt"].str[0:4]=='2023') & (data["dt"].str[5:7].astype(int)==12)& (data["dt"].str[8:10].astype(int)>=27)]
+            data, fig = celve_5min(data, stockCode, stockDate, show_1d=1,is_huice=1)
 
         if selected_api == "echarts":
             st.caption(
