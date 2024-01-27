@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 import streamlit as st
 import numpy as np
 from MyTT import *
-import ibapi.indicator as i
+import ibapi.indicator as ind
 
 
 def celve_5min(data, stockCode,stockDate,show_1d=1,is_huice=0):
@@ -34,7 +34,7 @@ def celve_5min(data, stockCode,stockDate,show_1d=1,is_huice=0):
             data_1d = data_1d.reset_index(drop=True)
         elif is_huice==1:
             # 回测数据dt标注有问题，过0点之后，仍为同一天
-            stockDate_plus1 = str(int(stockDate[3:5]) + 1)
+            stockDate_plus1 = str(int(stockDate[3:5]) + 1) if int(stockDate[3:5])>=10 else '0'+str(int(stockDate[3:5]) + 1)
             data_1d = data[
                 (
                         (data["dt"].str.contains(stockDate))
@@ -53,11 +53,12 @@ def celve_5min(data, stockCode,stockDate,show_1d=1,is_huice=0):
                 ]
     else:
         data_1d = data.reset_index(drop=True)
-    dt_all = pd.date_range(
-        start=data_1d["dt"].iloc[0], end=data_1d["dt"].iloc[-1], freq="1min"
-    )
-    dt_all = [d.strftime("%Y-%m-%d %H:%M:%S") for d in dt_all]
-    dt_breaks = list(set(dt_all) - set(data_1d["dt"]))
+    # dt_all = pd.date_range(
+    #     start=data_1d["dt"].iloc[0], end=data_1d["dt"].iloc[-1], freq="1min"
+    # )
+    # dt_all = [d.strftime("%Y-%m-%d %H:%M:%S") for d in dt_all]
+    # dt_breaks = list(set(dt_all) - set(data_1d["dt"]))
+    dt_breaks=''
 
     data_5min = data.groupby(data.index // 5).agg({'dt': 'first',
                                              'open': 'first',
@@ -147,6 +148,7 @@ def celve_5min(data, stockCode,stockDate,show_1d=1,is_huice=0):
     data_1d["icon_41"] = icon_41.astype('int')
 
     if is_huice==1:
+        # 回测数据的dt有问题，过了24点仍然是原来的日期，故需要再返回之前进行处理
         data_1d_before_0 = data_1d[
             (
                     (data_1d["dt"].str.contains(stockDate))
@@ -166,13 +168,11 @@ def celve_5min(data, stockCode,stockDate,show_1d=1,is_huice=0):
             ]
         data_1d_after_0.loc[:,'dt'] = data_1d_after_0['dt'].str[:8]+stockDate_plus1+data_1d_after_0['dt'].str[10:]
         data_1d = pd.concat([data_1d_before_0,data_1d_after_0]).reset_index(drop=True)
-    file_path = './data_calc/'+stockCode+stockDate+'.csv'
-
-
-    data_1d.to_csv(file_path)
+    if is_huice==1:
+        data_1d,data_op_detail_1d = huice_1d(data_1d,zhiying_perc=0.005)
     fig = plot_cand_volume(data_1d, dt_breaks)
 
-    return data_1d, fig
+    return data_1d,data_op_detail_1d, fig
 
 def signal_1(data: pd.DataFrame):
     n = 5
@@ -191,17 +191,17 @@ def signal_1(data: pd.DataFrame):
     # X_17:=FILTER(X_16,60) AND CLOSE/X_3>1.005;
 
     x15 = (
-        i.SMA(i.MAX(data["close"] - x14, 0).value, 14, 1).value
-        / i.SMA(abs(data["close"] - x14), 14, 1).value
+        ind.SMA(ind.MAX(data["close"] - x14, 0).value, 14, 1).value
+        / ind.SMA(abs(data["close"] - x14), 14, 1).value
         * 100
     )
-    x16 = i.CROSS(80, x15).value
-    x17 = i.AND(i.FILTER(x16, 60).value, (data["close"] / x3 > 1.005)).value
+    x16 = ind.CROSS(80, x15).value
+    x17 = ind.AND(ind.FILTER(x16, 60).value, (data["close"] / x3 > 1.005)).value
 
     # X_18:=CROSS(X_15,20);
     # X_19:=FILTER(X_18,60) AND CLOSE/X_3<0.995;
-    x18 = i.CROSS(x15, 20).value
-    x19 = i.AND(i.FILTER(x18, 60).value, (data["close"] / x3 < 0.995)).value
+    x18 = ind.CROSS(x15, 20).value
+    x19 = ind.AND(ind.FILTER(x18, 60).value, (data["close"] / x3 < 0.995)).value
 
     # DRAWICON(X_19,CLOSE*0.997,13);
     # DRAWICON(X_17, CLOSE * 1.003, 41);
@@ -214,25 +214,25 @@ def signal_1(data: pd.DataFrame):
     # X_23:=CROSS(SUM(X_21,0),0.5);
     x20 = (data["close"] > data["close"].shift(1)) & (data["close"] / x2 > 1 + n / 1000)
     x21 = (data["close"] < data["close"].shift(1)) & (data["close"] / x2 < 1 - n / 1000)
-    x22 = i.CROSS(x20.cumsum(), 0.5).value
-    x23 = i.CROSS(x21.cumsum(), 0.5).value
+    x22 = ind.CROSS(x20.cumsum(), 0.5).value
+    x23 = ind.CROSS(x21.cumsum(), 0.5).value
 
     # SUM(X_22,0)*CROSS(COUNT(CLOSE<REF(CLOSE,1),BARSLAST(X_22)),0.5);
     x24 = (
-        i.SUM(x22, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] < data["close"].shift(1), i.BARSLAST(x22).value
+        ind.SUM(x22, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] < data["close"].shift(1), ind.BARSLAST(x22).value
             ).value,
             0.5,
         ).value
     )
     # X_25:=SUM(X_23,0)*CROSS(COUNT(CLOSE>REF(CLOSE,1),BARSLAST(X_23)),0.5);
     x25 = (
-        i.SUM(x23, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] > data["close"].shift(1), i.BARSLAST(x23).value
+        ind.SUM(x23, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] > data["close"].shift(1), ind.BARSLAST(x23).value
             ).value,
             0.5,
         ).value
@@ -240,29 +240,29 @@ def signal_1(data: pd.DataFrame):
 
     # X1:CONST(SUM(IF(X_24,REF(CLOSE,1),DRAWNULL),0)),DOTLINE,COLORYELLOW;
     # Z1:CONST(SUM(IF(X_25,REF(CLOSE,1),DRAWNULL),0)),DOTLINE,COLORGREEN;
-    l1 = i.CONST(i.SUM(i.IF(x24, data["close"].shift(1), i.NA).value, 0).value).value
-    l2 = i.CONST(i.SUM(i.IF(x25, data["close"].shift(1), i.NA).value, 0).value).value
+    l1 = ind.CONST(ind.SUM(ind.IF(x24, data["close"].shift(1), ind.NA).value, 0).value).value
+    l2 = ind.CONST(ind.SUM(ind.IF(x25, data["close"].shift(1), ind.NA).value, 0).value).value
 
     # X_26:=CROSS(SUM(X_20 AND CLOSE>X1*(1+1/100),0),0.5);
-    x26 = i.CROSS((x20 & (data["close"] > l1 * (1 + 1 / 100))).cumsum(), 0.5).value
+    x26 = ind.CROSS((x20 & (data["close"] > l1 * (1 + 1 / 100))).cumsum(), 0.5).value
     # X_27:=CROSS(SUM(X_21 AND CLOSE<Z1*(1-1/100),0),0.5);
-    x27 = i.CROSS((x21 & (data["close"] < l2 * (1 - 1 / 100))).cumsum(), 0.5).value
+    x27 = ind.CROSS((x21 & (data["close"] < l2 * (1 - 1 / 100))).cumsum(), 0.5).value
     # X_28:=SUM(X_26,0)*CROSS(COUNT(CLOSE<REF(CLOSE,1),BARSLAST(X_26)),0.5);
     x28 = (
-        i.SUM(x26, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] < data["close"].shift(1), i.BARSLAST(x26).value
+        ind.SUM(x26, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] < data["close"].shift(1), ind.BARSLAST(x26).value
             ).value,
             0.5,
         ).value
     )
     # X_29:=SUM(X_27,0)*CROSS(COUNT(CLOSE>REF(CLOSE,1),BARSLAST(X_27)),0.5);
     x29 = (
-        i.SUM(x27, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] > data["close"].shift(1), i.BARSLAST(x27).value
+        ind.SUM(x27, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] > data["close"].shift(1), ind.BARSLAST(x27).value
             ).value,
             0.5,
         ).value
@@ -270,8 +270,8 @@ def signal_1(data: pd.DataFrame):
 
     # X2:CONST(SUM(IF(X_28,REF(CLOSE,1),DRAWNULL),0)),COLORWHITE;
     # Z2:CONST(SUM(IF(X_29,REF(CLOSE,1),DRAWNULL),0)),COLORGREEN;
-    l3 = i.CONST(i.SUM(i.IF(x28, data["close"].shift(1), i.NA).value, 0).value).value
-    l4 = i.CONST(i.SUM(i.IF(x29, data["close"].shift(1), i.NA).value, 0).value).value
+    l3 = ind.CONST(ind.SUM(ind.IF(x28, data["close"].shift(1), ind.NA).value, 0).value).value
+    l4 = ind.CONST(ind.SUM(ind.IF(x29, data["close"].shift(1), ind.NA).value, 0).value).value
 
     # DRAWICON(X_25, REF(CLOSE * 0.9999, 1), 1);
     # DRAWICON(X_29, REF(CLOSE * 0.9999, 1), 34);
@@ -288,66 +288,66 @@ def signal_1(data: pd.DataFrame):
     # X_31:=CLOSE<REF(CLOSE,1) AND CLOSE/X_2<1-M/1000;
     x31 = (data["close"] < data["close"].shift(1)) & (data["close"] / x2 < 1 - m / 1000)
     # X_32:=CROSS(SUM(X_30,0),0.5);
-    x32 = i.CROSS(i.SUM(x30, 0).value, 0.5).value
+    x32 = ind.CROSS(ind.SUM(x30, 0).value, 0.5).value
     # X_33:=CROSS(SUM(X_31,0),0.5);
-    x33 = i.CROSS(i.SUM(x31, 0).value, 0.5).value
+    x33 = ind.CROSS(ind.SUM(x31, 0).value, 0.5).value
 
     # X_34:=SUM(X_32,0)*CROSS(COUNT(CLOSE<REF(CLOSE,1),BARSLAST(X_32)),0.5);
     x34 = (
-        i.SUM(x32, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] < data["close"].shift(1), i.BARSLAST(x32).value
+        ind.SUM(x32, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] < data["close"].shift(1), ind.BARSLAST(x32).value
             ).value,
             0.5,
         ).value
     )
     # X_35:=SUM(X_33,0)*CROSS(COUNT(CLOSE>REF(CLOSE,1),BARSLAST(X_33)),0.5);
     x35 = (
-        i.SUM(x33, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] > data["close"].shift(1), i.BARSLAST(x33).value
+        ind.SUM(x33, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] > data["close"].shift(1), ind.BARSLAST(x33).value
             ).value,
             0.5,
         ).value
     )
 
     # X_36:=CONST(SUM(IF(X_34,REF(CLOSE,1),DRAWNULL),0));
-    x36 = i.CONST(i.SUM(i.IF(x34, data["close"].shift(1), np.nan).value, 0).value).value
+    x36 = ind.CONST(ind.SUM(ind.IF(x34, data["close"].shift(1), np.nan).value, 0).value).value
     # X_37:=CONST(SUM(IF(X_35,REF(CLOSE,1),DRAWNULL),0));
-    x37 = i.CONST(i.SUM(i.IF(x35, data["close"].shift(1), np.nan).value, 0).value).value
+    x37 = ind.CONST(ind.SUM(ind.IF(x35, data["close"].shift(1), np.nan).value, 0).value).value
 
     # X_38:=CROSS(SUM(X_30 AND CLOSE>X_36*1.02,0),0.5);
-    x38 = i.CROSS(i.SUM(x30 & (data["close"] > x36 * 1.02), 0).value, 0.5).value
+    x38 = ind.CROSS(ind.SUM(x30 & (data["close"] > x36 * 1.02), 0).value, 0.5).value
     # X_39:=CROSS(SUM(X_31 AND CLOSE<X_37*0.98,0),0.5);
-    x39 = i.CROSS(i.SUM(x31 & (data["close"] < x37 * 0.98), 0).value, 0.5).value
+    x39 = ind.CROSS(ind.SUM(x31 & (data["close"] < x37 * 0.98), 0).value, 0.5).value
 
     # X_40:=SUM(X_38,0)*CROSS(COUNT(CLOSE<REF(CLOSE,1),BARSLAST(X_38)),0.5);
     x40 = (
-        i.SUM(x38, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] < data["close"].shift(1), i.BARSLAST(x38).value
+        ind.SUM(x38, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] < data["close"].shift(1), ind.BARSLAST(x38).value
             ).value,
             0.5,
         ).value
     )
     # X_41:=SUM(X_39,0)*CROSS(COUNT(CLOSE>REF(CLOSE,1),BARSLAST(X_39)),0.5);
     x41 = (
-        i.SUM(x39, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] > data["close"].shift(1), i.BARSLAST(x39).value
+        ind.SUM(x39, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] > data["close"].shift(1), ind.BARSLAST(x39).value
             ).value,
             0.5,
         ).value
     )
 
     # X_42:=CONST(SUM(IF(X_40,REF(CLOSE,1),DRAWNULL),0));
-    x42 = i.CONST(i.SUM(i.IF(x40, data["close"].shift(1), np.nan).value, 0).value).value
+    x42 = ind.CONST(ind.SUM(ind.IF(x40, data["close"].shift(1), np.nan).value, 0).value).value
     # X_43:=CONST(SUM(IF(X_41,REF(CLOSE,1),DRAWNULL),0));
-    x43 = i.CONST(i.SUM(i.IF(x41, data["close"].shift(1), np.nan).value, 0).value).value
+    x43 = ind.CONST(ind.SUM(ind.IF(x41, data["close"].shift(1), np.nan).value, 0).value).value
 
     # DRAWICON(X_40,CLOSE*1.002,12);
     icon_12 = x40
@@ -359,16 +359,16 @@ def signal_1(data: pd.DataFrame):
     # X_45:=CLOSE<REF(CLOSE,1) AND CLOSE/X_2<1-1/100;
     x45 = (data["close"] < data["close"].shift(1)) & (data["close"] / x2 < 1 - 1 / 100)
     # X_46:=CROSS(SUM(X_44,0),0.5);
-    x46 = i.CROSS(i.SUM(x44, 0).value, 0.5).value
+    x46 = ind.CROSS(ind.SUM(x44, 0).value, 0.5).value
     # X_47:=CROSS(SUM(X_45,0),0.5);
-    x47 = i.CROSS(i.SUM(x45, 0).value, 0.5).value
+    x47 = ind.CROSS(ind.SUM(x45, 0).value, 0.5).value
 
     # X_48:=SUM(X_46,0)*CROSS(COUNT(CLOSE<REF(CLOSE,1),BARSLAST(X_46)),0.5);
     x48 = (
-        i.SUM(x46, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] < data["close"].shift(1), i.BARSLAST(x46).value
+        ind.SUM(x46, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] < data["close"].shift(1), ind.BARSLAST(x46).value
             ).value,
             0.5,
         ).value
@@ -376,19 +376,19 @@ def signal_1(data: pd.DataFrame):
 
     # X_49:=SUM(X_47,0)*CROSS(COUNT(CLOSE>REF(CLOSE,1),BARSLAST(X_47)),0.5);
     x49 = (
-        i.SUM(x47, 0).value
-        * i.CROSS(
-            i.COUNT(
-                data["close"] > data["close"].shift(1), i.BARSLAST(x47).value
+        ind.SUM(x47, 0).value
+        * ind.CROSS(
+            ind.COUNT(
+                data["close"] > data["close"].shift(1), ind.BARSLAST(x47).value
             ).value,
             0.5,
         ).value
     )
 
     # X_50:=CONST(SUM(IF(X_48,REF(CLOSE,1),DRAWNULL),0));
-    x50 = i.CONST(i.SUM(i.IF(x48, data["close"].shift(1), np.nan).value, 0).value)
+    x50 = ind.CONST(ind.SUM(ind.IF(x48, data["close"].shift(1), np.nan).value, 0).value)
     # X_51:=CONST(SUM(IF(X_49,REF(CLOSE,1),DRAWNULL),0));
-    x51 = i.CONST(i.SUM(i.IF(x49, data["close"].shift(1), np.nan).value, 0).value)
+    x51 = ind.CONST(ind.SUM(ind.IF(x49, data["close"].shift(1), np.nan).value, 0).value)
     # DRAWICON(X_48,CLOSE*1.002,39);
     # DRAWICON(X_49,CLOSE*0.9999,38);
     icon_39 = x48
@@ -418,7 +418,55 @@ def signal_1(data: pd.DataFrame):
 
     return icon
 
+def huice_1d(data,zhiying_perc):
+    data['buy_signal'] = (1*data['icon_1'] + 2*data['icon_38']+ 3*data['icon_34']+ 4*data['icon_13']+ 5*data['icon_11'])
+    data['sell_signal'] = (1*data['icon_2'] + 2*data['icon_39']+ 3*data['icon_35']+ 4*data['icon_12']+ 5*data['icon_41'])
 
+    long_index = data[data['buy_signal'] >= 1].index
+    short_index = data[data['sell_signal'] >= 1].index
+
+    long_end_index = []
+    short_end_index = []
+    for i in long_index:
+        high = data.iloc[i]['close']
+        for j in range(len(data)-i-2):
+            if (int(data.iloc[i + j]['dt'][11:13]) >= 3) and (int(data.iloc[i + j]['dt'][14:16]) >= 50):
+                # 如果到最后10分钟，则直接卖掉
+                long_end_index.append(i + j)
+                break
+            elif data.iloc[i + j]['sell_signal'] >= 1:
+                # 出现卖出信号则卖
+                long_end_index.append(i + j)
+                break
+            else:
+                # 计算止盈
+                cur_price = data.iloc[i + j]['close']
+                if cur_price > high:
+                    high = cur_price
+                if high / cur_price - 1 >= zhiying_perc:
+                    long_end_index.append(i + j)
+                    break
+    # data['long_end'] = 0
+    # for i in long_end_index:
+    #     data.loc[i,'long_end']=1
+    data_profit = data.copy(deep=True)
+    data_profit['profit'] = 0
+    data_profit['long_end'] = 0
+    long_buy = data_profit.iloc[long_index].reset_index(drop=True)
+    long_sell = data_profit.iloc[long_end_index].reset_index(drop=True)
+
+    for i in range(len(long_sell)):
+        buy_price = long_buy.iloc[i]['close']
+        sell_price = long_sell.iloc[i]['close']
+        profit = sell_price/buy_price - 1
+        long_sell.loc[i,'profit'] = profit
+        long_sell.loc[i,'long_end'] = 1
+        if i==0:
+            data_op_detail=pd.concat([long_buy.iloc[[i]],long_sell.iloc[[i]]])
+        else:
+            data_op_detail=pd.concat([data_op_detail,long_buy.iloc[[i]],long_sell.iloc[[i]]])
+
+    return data,data_op_detail
 
 def plot_cand_volume(data, dt_breaks):
     # Create subplots and mention plot grid size
@@ -602,5 +650,25 @@ if __name__ == "__main__":
     with open(data_path_ready) as f:
         raw_data = json.load(f)
         data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+    data_op_details = ''
+    for i in range(1,6):
+        for j in range(1,30):
+            date_mm = '0'+str(i) if i <10 else str(i)
+            date_dd = '0'+str(j) if j <10 else str(j)
+            date = date_mm+'-'+date_dd
+            print(date)
+            try:
+                _,data_op_detail,__ = celve_5min(data, stockCode='TSLA', stockDate=date, show_1d=1, is_huice=1)
+                print(data_op_detail)
+                if not isinstance(data_op_details,pd.DataFrame):
+                    data_op_details = data_op_detail
+                else:
+                    data_op_details = pd.concat([data_op_details,data_op_detail])
+            except:
+                print('no data')
+    data_op_details=data_op_details.reset_index(drop=True)
+    data_op_details.to_csv('./data_op_details.csv')
 
-    __ = celve_5min(data,stockCode='TSLA',stockDate='10-20',show_1d=1,is_huice=1)
+    # _,data_op_detail,__ = celve_5min(data,stockCode='TSLA',stockDate='01-03',show_1d=1,is_huice=1)
+    # print(data_op_detail)
+

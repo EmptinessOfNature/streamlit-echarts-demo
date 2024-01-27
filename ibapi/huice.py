@@ -13,67 +13,66 @@ from MyTT import *
 import ibapi.indicator as i
 
 
-data_name = 'TSLA'
-data = pd.read_csv("../data_hist/"+data_name+".csv")
-print(1)
+def huice_csv2json():
+    data_name = 'TSLA'
+    data = pd.read_csv("../data_hist/"+data_name+".csv")
+    print(1)
 
 
-ret = '[["dt", "open", "close", "high", "low", "vol", "cje", "zxj", "Code"],'
+    ret = '[["dt", "open", "close", "high", "low", "vol", "cje", "zxj", "Code"],'
 
-for i in range(1,len(data)):
-    l = (
-        '["'
-        + str(data.iloc[i]["date"])
-        + '",'
-        + str(float(data.iloc[i]["开盘价"]))
-        + ","
-        + str(float(data.iloc[i]["收盘价"]))
-        + ","
-        + str(float(data.iloc[i]["最高价"]))
-        + ","
-        + str(float(data.iloc[i]["最低价"]))
-        + ","
-        + str(int(data.iloc[i]["成交量(股)"]))
-        + ","
-        + str(int(data.iloc[i]["成交量(股)"]))
-        + ","
-        + str(int(data.iloc[i]["成交量(股)"]))
-        + ',"分时图"'
-        + "],"
-    )
-    ret += l
-ret=ret[:-1]+']'
-data_path_hist_ready = '../data_hist/'+data_name[0:4]+'.json'
-with open(data_path_hist_ready, "w") as f:
-    f.write(ret)
+    for i in range(1,len(data)):
+        l = (
+            '["'
+            + str(data.iloc[i]["date"])
+            + '",'
+            + str(float(data.iloc[i]["开盘价"]))
+            + ","
+            + str(float(data.iloc[i]["收盘价"]))
+            + ","
+            + str(float(data.iloc[i]["最高价"]))
+            + ","
+            + str(float(data.iloc[i]["最低价"]))
+            + ","
+            + str(int(data.iloc[i]["成交量(股)"]))
+            + ","
+            + str(int(data.iloc[i]["成交量(股)"]))
+            + ","
+            + str(int(data.iloc[i]["成交量(股)"]))
+            + ',"分时图"'
+            + "],"
+        )
+        ret += l
+    ret=ret[:-1]+']'
+    data_path_hist_ready = '../data_hist/'+data_name[0:4]+'.json'
+    with open(data_path_hist_ready, "w") as f:
+        f.write(ret)
 
-print(1)
+    print(1)
+
 def zhiying(data,zhiying_perc=0.005,zhisun_perc=0.005):
+    # 对于做多点，记录买入后的高点，当前价格低于最高点的止盈比例，则卖掉。
     long_index = data[data['buy_signal']>=1].index
     short_index = data[data['sell_signal'] >= 1].index
     long_end_index = []
     short_end_index = []
     for i in long_index:
-        long_price = data.iloc[i]['close']
         high = data.iloc[i]['close']
-        low = data.iloc[i]['close']
         for j in range(400):
             if int(data.iloc[i+j]['dt'][11:13])==4 and int(data.iloc[i+j]['dt'][14:16])==30:
+                # 如果到最后10分钟，则直接卖掉
                 long_end_index.append(i+j)
                 continue
             elif data.iloc[i+j]['sell_signal']>= 1:
+                # 出现卖出信号则卖
                 long_end_index.append(i + j)
                 continue
             else:
-                cur_price =  data.iloc[i+j]['close']
+                # 计算止盈
+                cur_price = data.iloc[i+j]['close']
                 if cur_price>high:
                     high = cur_price
-                if cur_price<low:
-                    low = cur_price
-                if cur_price/high - 1>=zhiying_perc:
-                    long_end_index.append(i + j)
-                    continue
-                if cur_price/low - 1 <=-zhisun_perc:
+                if high/cur_price - 1>=zhiying_perc:
                     long_end_index.append(i + j)
                     continue
 
