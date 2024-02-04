@@ -109,7 +109,10 @@ def main():
             # v3分时图
 
 
-            data, fig = celve_5min(data,stockCode,stockDate,show_1d=0)
+            data,data_op_detail_1d, fig = celve_5min(data,stockCode,stockDate,show_1d=1,is_huice=0)
+
+            data_path_calc = 'data_calc/' + str(stockCode)+str(stockDate) + '.csv'
+            data_op_detail_1d.to_csv(data_path_calc)
 
         if st.button("回测"):
             data_path_ready = './data_hist/TSLA.json'

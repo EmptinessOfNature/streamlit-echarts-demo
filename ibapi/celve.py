@@ -7,13 +7,16 @@ import streamlit as st
 import numpy as np
 from MyTT import *
 import ibapi.indicator as ind
+import json
 
 
 def celve_5min(data, stockCode,stockDate,show_1d=1,is_huice=0):
     if show_1d:
         if is_huice==0:
             # 数据只保留stockDate的17:00到次日的09:00
-            stockDate_plus1 = stockDate[:3] + str(int(stockDate[3:5]) + 1)
+            # stockDate_plus1 = stockDate[:3] + str(int(stockDate[3:5]) + 1)
+            stockDate_plus1 = stockDate[:3] + str(int(stockDate[3:5]) + 1) if int(stockDate[3:5]) >= 10 else stockDate[:3] + '0' + str(
+                int(stockDate[3:5]) + 1)
             print(stockDate_plus1)
             data_1d = data[
                 (
@@ -168,8 +171,7 @@ def celve_5min(data, stockCode,stockDate,show_1d=1,is_huice=0):
             ]
         data_1d_after_0.loc[:,'dt'] = data_1d_after_0['dt'].str[:8]+stockDate_plus1+data_1d_after_0['dt'].str[10:]
         data_1d = pd.concat([data_1d_before_0,data_1d_after_0]).reset_index(drop=True)
-    if is_huice==1:
-        data_1d,data_op_detail_1d = huice_1d(data_1d,zhiying_perc=0.005)
+    data_1d,data_op_detail_1d = huice_1d(data_1d,zhiying_perc=0.005)
     fig = plot_cand_volume(data_1d, dt_breaks)
 
     return data_1d,data_op_detail_1d, fig
@@ -430,7 +432,7 @@ def huice_1d(data,zhiying_perc):
     for i in long_index:
         high = data.iloc[i]['close']
         for j in range(len(data)-i-2):
-            if (int(data.iloc[i + j]['dt'][11:13]) >= 3) and (int(data.iloc[i + j]['dt'][14:16]) >= 50):
+            if (int(data.iloc[i + j]['dt'][11:13]) == 4) and (int(data.iloc[i + j]['dt'][14:16]) >= 50):
                 # 如果到最后10分钟，则直接卖掉
                 long_end_index.append(i + j)
                 break
@@ -645,13 +647,15 @@ def plot_cand_volume(data, dt_breaks):
 
 
 if __name__ == "__main__":
-    import json
+    '''测试批量数据'''
+    '''
     data_path_ready = '../data_hist/TSLA.json'
     with open(data_path_ready) as f:
         raw_data = json.load(f)
         data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
     data_op_details = ''
-    for i in range(1,6):
+    # i是月份，j是日
+    for i in range(7,12):
         for j in range(1,30):
             date_mm = '0'+str(i) if i <10 else str(i)
             date_dd = '0'+str(j) if j <10 else str(j)
@@ -668,7 +672,12 @@ if __name__ == "__main__":
                 print('no data')
     data_op_details=data_op_details.reset_index(drop=True)
     data_op_details.to_csv('./data_op_details.csv')
+    '''
 
-    # _,data_op_detail,__ = celve_5min(data,stockCode='TSLA',stockDate='01-03',show_1d=1,is_huice=1)
-    # print(data_op_detail)
+    data_path_ready = '../data_ready/10010129.json'
+    with open(data_path_ready) as f:
+        raw_data = json.load(f)
+        data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+    _,data_op_detail,__ = celve_5min(data,stockCode='TSLA',stockDate='01-29',show_1d=1,is_huice=0)
+    print(data_op_detail)
 
