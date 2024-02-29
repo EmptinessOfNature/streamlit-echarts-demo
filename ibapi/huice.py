@@ -14,7 +14,7 @@ import ibapi.indicator as i
 
 
 def huice_csv2json():
-    data_name = 'TSLA'
+    data_name = 'QQQ'
     data = pd.read_csv("../data_hist/"+data_name+".csv")
     print(1)
 
@@ -44,7 +44,7 @@ def huice_csv2json():
         )
         ret += l
     ret=ret[:-1]+']'
-    data_path_hist_ready = '../data_hist/'+data_name[0:4]+'.json'
+    data_path_hist_ready = '../data_hist/'+data_name+'.json'
     with open(data_path_hist_ready, "w") as f:
         f.write(ret)
 
@@ -211,11 +211,12 @@ def celve_huice(data, stockCode,stockDate,is1d=0):
     return data_1d
 
 
-with open(data_path_hist_ready) as f:
-    raw_data = json.load(f)
-    data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
-    data = data[data["dt"].str[5:7].astype(int)== 1]
-    print(len(data))
-
-data = celve_huice(data,'TSLA','huice',is1d=0)
-zhiying(data)
+# with open(data_path_hist_ready) as f:
+#     raw_data = json.load(f)
+#     data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+#     data = data[data["dt"].str[5:7].astype(int)== 1]
+#     print(len(data))
+#
+# data = celve_huice(data,'QQQ','huice',is1d=0)
+# zhiying(data)
+huice_csv2json()

@@ -11,6 +11,7 @@ import json
 
 
 def celve_5min(data, stockCode,stockDate,show_1d=1,is_huice=0):
+    data_atr1 = get_atr(data)
     if show_1d:
         if is_huice==0:
             # 数据只保留stockDate的17:00到次日的09:00
@@ -171,7 +172,11 @@ def celve_5min(data, stockCode,stockDate,show_1d=1,is_huice=0):
             ]
         data_1d_after_0.loc[:,'dt'] = data_1d_after_0['dt'].str[:8]+stockDate_plus1+data_1d_after_0['dt'].str[10:]
         data_1d = pd.concat([data_1d_before_0,data_1d_after_0]).reset_index(drop=True)
-    data_1d,data_op_detail_1d = huice_1d(data_1d,zhiying_perc=0.005)
+
+    ymd = '2024'+stockDate[0:2]+stockDate[3:5]
+    zhiying_perc = data_atr1[data_atr1['yyyymmdd'] == ymd].zhiying.values[0]
+    print(zhiying_perc)
+    data_1d,data_op_detail_1d = huice_1d(data_1d,zhiying_perc=zhiying_perc)
     fig = plot_cand_volume(data_1d, dt_breaks)
 
     return data_1d,data_op_detail_1d, fig
@@ -470,6 +475,20 @@ def huice_1d(data,zhiying_perc):
 
     return data,data_op_detail
 
+def get_atr(data):
+    data['yyyymmdd']=data['dt'].str[0:4]+data['dt'].str[5:7]+data['dt'].str[8:10]
+    data_atr1 = data.groupby('yyyymmdd').agg({'yyyymmdd': 'last', 'close': 'min'})
+    data_atr2 = data.groupby('yyyymmdd').agg({'yyyymmdd': 'last', 'close': 'max'})
+    data_atr3 = data.groupby('yyyymmdd').agg({'yyyymmdd': 'last', 'close': 'last'})
+    data_atr1['close_max'] = data_atr2['close']
+    data_atr1['close_last'] = data_atr3['close']
+    data_atr1['atr'] = data_atr1['close_max']-data_atr1['close']
+    data_atr1['dongtaifudu'] = data_atr1['atr'].rolling(window=14, min_periods=1).mean()/data_atr1['close_last']
+    data_atr1['zhiying'] = (data_atr1['dongtaifudu']/4).shift(1)
+
+    return data_atr1
+
+
 def plot_cand_volume(data, dt_breaks):
     # Create subplots and mention plot grid size
     fig = make_subplots(
@@ -648,36 +667,39 @@ def plot_cand_volume(data, dt_breaks):
 
 if __name__ == "__main__":
     '''测试批量数据'''
-    '''
-    data_path_ready = '../data_hist/TSLA.json'
-    with open(data_path_ready) as f:
-        raw_data = json.load(f)
-        data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
-    data_op_details = ''
-    # i是月份，j是日
-    for i in range(7,12):
-        for j in range(1,30):
-            date_mm = '0'+str(i) if i <10 else str(i)
-            date_dd = '0'+str(j) if j <10 else str(j)
-            date = date_mm+'-'+date_dd
-            print(date)
-            try:
-                _,data_op_detail,__ = celve_5min(data, stockCode='TSLA', stockDate=date, show_1d=1, is_huice=1)
-                print(data_op_detail)
-                if not isinstance(data_op_details,pd.DataFrame):
-                    data_op_details = data_op_detail
-                else:
-                    data_op_details = pd.concat([data_op_details,data_op_detail])
-            except:
-                print('no data')
-    data_op_details=data_op_details.reset_index(drop=True)
-    data_op_details.to_csv('./data_op_details.csv')
-    '''
+    #
+    # data_path_ready = '../data_hist/QQQ.json'
+    # with open(data_path_ready) as f:
+    #     raw_data = json.load(f)
+    #     data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+    # data_op_details = ''
+    # # i是月份，j是日
+    # for i in range(7,12):
+    #     for j in range(1,30):
+    #         date_mm = '0'+str(i) if i <10 else str(i)
+    #         date_dd = '0'+str(j) if j <10 else str(j)
+    #         date = date_mm+'-'+date_dd
+    #         # _, data_op_detail, __ = celve_5min(data, stockCode='QQQ', stockDate=date, show_1d=1, is_huice=1)
+    #         print(date)
+    #         try:
+    #             _,data_op_detail,__ = celve_5min(data, stockCode='QQQ', stockDate=date, show_1d=1, is_huice=1)
+    #             print(data_op_detail)
+    #             if not isinstance(data_op_details,pd.DataFrame):
+    #                 data_op_details = data_op_detail
+    #             else:
+    #                 data_op_details = pd.concat([data_op_details,data_op_detail])
+    #         except:
+    #             print('no data')
+    # data_op_details=data_op_details.reset_index(drop=True)
+    # data_op_details.to_csv('./data_op_details.csv')
+
+
 
     data_path_ready = '../data_ready/10010129.json'
     with open(data_path_ready) as f:
         raw_data = json.load(f)
         data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
-    _,data_op_detail,__ = celve_5min(data,stockCode='TSLA',stockDate='01-29',show_1d=1,is_huice=0)
+    _,data_op_detail,__ = celve_5min(data,stockCode='TSLA',stockDate='02-04',show_1d=1,is_huice=0)
     print(data_op_detail)
+
 

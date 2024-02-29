@@ -14,7 +14,7 @@ from ibapi.client import Contract
 from datetime import datetime
 from ibapi.fufei6_exe import SimpleClient
 from ibapi.celve import celve_5min
-
+from download_data import download_data
 
 def main():
     st.title("NBNB123")
@@ -89,7 +89,7 @@ def main():
                     req_id, contract, now, "1 w", "1 min", "TRADES", False, 1, False, []
                 )
                 # client.reqHistoricalData(req_id, contract, now, '1 w', '1 min', 'ADJUSTED_LAST', False, 1, False, [])
-                time.sleep(5)
+                time.sleep(8)
                 print("断开client")
                 client.disconnect()
             else:
@@ -121,6 +121,17 @@ def main():
                 data = pd.DataFrame(raw_data[1:], columns=raw_data[0])
             # data=data[(data["dt"].str[0:4]=='2023') & (data["dt"].str[5:7].astype(int)==12)& (data["dt"].str[8:10].astype(int)>=27)]
             data, fig = celve_5min(data, stockCode, stockDate, show_1d=1,is_huice=1)
+
+        if st.button("下载数据"):
+            stock_dict = {'TSLA': '1001', 'MSFT': '1002', 'NVDA': '1003', 'AAPL': '1004', 'AMZN': '1005', 'TSM': '1006',
+                          'NFLX': '1007', 'GOOG': '1008',
+                          'META': '1009', 'ASML': '1010', 'ARKK': '1011', 'PDD': '1012'}
+            client = SimpleClient("127.0.0.1", 7497, 3)
+            for stockCode in stock_dict.keys():
+                download_data(stock_dict,stockCode,client)
+            print("断开client")
+            client.disconnect()
+
 
         if selected_api == "echarts":
             st.caption(
