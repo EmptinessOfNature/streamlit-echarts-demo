@@ -15,6 +15,7 @@ from datetime import datetime
 from ibapi.fufei6_exe import SimpleClient
 from ibapi.celve import celve_5min
 from download_data import download_data
+from real_time_data import rt_read_data
 
 def main():
     st.title("NBNB123")
@@ -130,6 +131,15 @@ def main():
             for stockCode in stock_dict.keys():
                 download_data(stock_dict,stockCode,client)
             print("断开client")
+            client.disconnect()
+
+        if st.button("实时"):
+            if client == '':
+                client = SimpleClient("127.0.0.1", 7497, 3)
+                client.reqCurrentTime()
+                print("新建client")
+            rt_read_data(client)
+        if st.button("停止实时"):
             client.disconnect()
 
 
